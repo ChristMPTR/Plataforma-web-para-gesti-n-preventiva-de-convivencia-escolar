@@ -1,0 +1,109 @@
+<div class="dashboard">
+  <header class="dashboard-header">
+    <div>
+      <h1>Panel de Control</h1>
+      <p class="date">{{ today | date:'fullDate' }}</p>
+    </div>
+  </header>
+
+  <div class="skeleton-grid" *ngIf="loading">
+    <div class="skeleton-card" *ngFor="let _ of [1,2,3,4]">
+      <div class="skeleton-line w-60"></div>
+      <div class="skeleton-line w-40 h-3 mt-2"></div>
+    </div>
+    <div class="skeleton-card full-width" *ngFor="let _ of [1,2]">
+      <div class="skeleton-line w-80"></div>
+      <div class="skeleton-rect mt-2"></div>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <section class="stats-grid">
+      <div class="stat-card stat-primary">
+        <div class="stat-icon"><span class="material-symbols-outlined">folder</span></div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.total_casos }}</span>
+          <span class="stat-label">Total Casos</span>
+        </div>
+      </div>
+      <div class="stat-card stat-warning">
+        <div class="stat-icon"><span class="material-symbols-outlined">pending</span></div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.casos_abiertos }}</span>
+          <span class="stat-label">Casos Abiertos</span>
+        </div>
+      </div>
+      <div class="stat-card stat-success">
+        <div class="stat-icon"><span class="material-symbols-outlined">check_circle</span></div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.casos_cerrados }}</span>
+          <span class="stat-label">Casos Cerrados</span>
+        </div>
+      </div>
+      <div class="stat-card stat-accent">
+        <div class="stat-icon"><span class="material-symbols-outlined">event</span></div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.reuniones_realizadas }}</span>
+          <span class="stat-label">Reuniones Realizadas</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="charts-grid">
+      <div class="card">
+        <h3>Casos por Curso</h3>
+        <div class="chart-container"><canvas #barChart></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Tendencias Mensuales</h3>
+        <div class="chart-container"><canvas #lineChart></canvas></div>
+      </div>
+    </section>
+
+    <section class="alertas-section" *ngIf="alertas.length">
+      <h3>Alertas</h3>
+      <div class="alertas-grid">
+        <div class="alerta-card" *ngFor="let a of alertas" [class.alerta-warning]="a.tipo === 'warning'" [class.alerta-danger]="a.tipo === 'danger'" [class.alerta-info]="a.tipo === 'info'">
+          <span class="material-symbols-outlined">
+            {{ a.tipo === 'warning' ? 'warning' : a.tipo === 'danger' ? 'error' : 'info' }}
+          </span>
+          <div>
+            <strong>{{ a.titulo }}</strong>
+            <p>{{ a.mensaje }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Casos Recientes</h3>
+      <div class="table-responsive" *ngIf="casosRecientes.length; else emptyCasos">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Estudiante</th>
+              <th>Tipo</th>
+              <th>Prioridad</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of casosRecientes">
+              <td>{{ c.id }}</td>
+              <td>{{ c.estudiante_nombre }}</td>
+              <td>{{ c.tipo_caso }}</td>
+              <td><span class="badge" [class]="getPrioridadClass(c.prioridad)">{{ c.prioridad }}</span></td>
+              <td><span class="badge" [class]="getEstadoClass(c.estado)">{{ c.estado }}</span></td>
+              <td>{{ c.created_at | date:'shortDate' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #emptyCasos>
+        <div class="empty-state"><span class="material-symbols-outlined">inbox</span><p>No hay casos recientes</p></div>
+      </ng-template>
+    </section>
+  </ng-container>
+</div>

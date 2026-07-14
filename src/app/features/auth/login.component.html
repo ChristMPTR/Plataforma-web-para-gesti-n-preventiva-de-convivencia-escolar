@@ -1,0 +1,70 @@
+<div class="login">
+  <div class="login__card">
+    <div class="login__brand">
+      <span class="login__icon">&#10024;</span>
+      <h1 class="login__title">NEXORA</h1>
+      <p class="login__subtitle">Convivencia Escolar</p>
+    </div>
+
+    <form class="login__form" [formGroup]="form" (ngSubmit)="onSubmit()">
+      @if (error()) {
+        <div class="login__error">{{ error() }}</div>
+      }
+
+      <div class="form-group">
+        <label class="form-label" for="email">Correo electrónico</label>
+        <input
+          id="email"
+          class="form-input"
+          [class.form-input--error]="email.invalid && email.touched"
+          type="email"
+          formControlName="email"
+          placeholder="correo@ejemplo.com"
+          autocomplete="email"
+        />
+        @if (email.invalid && email.touched) {
+          <span class="form-error">
+            @if (email.errors?.['required']) { El correo es obligatorio }
+            @if (email.errors?.['email']) { Ingresa un correo válido }
+          </span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Contraseña</label>
+        <input
+          id="password"
+          class="form-input"
+          [class.form-input--error]="password.invalid && password.touched"
+          type="password"
+          formControlName="password"
+          placeholder="••••••••"
+          autocomplete="current-password"
+        />
+        @if (password.invalid && password.touched) {
+          <span class="form-error">
+            @if (password.errors?.['required']) { La contraseña es obligatoria }
+            @if (password.errors?.['minlength']) { Mínimo 6 caracteres }
+          </span>
+        }
+      </div>
+
+      <button
+        class="btn btn--primary btn--full"
+        type="submit"
+        [disabled]="loading()"
+      >
+        @if (loading()) {
+          <span class="btn__spinner"></span>
+          Iniciando sesión...
+        } @else {
+          Iniciar Sesión
+        }
+      </button>
+    </form>
+
+    <div class="login__footer">
+      <a routerLink="/recordar-contrasena" class="login__link">¿Olvidaste tu contraseña?</a>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,41 @@
+<header class="topbar">
+  <div class="topbar__left">
+    <button class="topbar__hamburger" (click)="menuToggle.emit()" type="button" aria-label="Toggle menu">
+      <span class="topbar__hamburger-icon">&#9776;</span>
+    </button>
+    <h1 class="topbar__title">{{ pageTitle }}</h1>
+  </div>
+
+  <div class="topbar__right">
+    <button class="topbar__notifications" type="button" aria-label="Notificaciones">
+      <span class="topbar__bell">&#128276;</span>
+      @if (notifications > 0) {
+        <span class="topbar__badge">{{ notifications }}</span>
+      }
+    </button>
+
+    <div class="topbar__user">
+      <button class="topbar__user-btn" (click)="toggleUserMenu()" type="button" aria-label="Menú de usuario">
+        <div class="topbar__avatar">{{ userName | slice:0:1 }}</div>
+        <div class="topbar__user-meta">
+          <span class="topbar__user-name">{{ userName }}</span>
+          <span class="topbar__user-role">{{ userRole }}</span>
+        </div>
+        <span class="topbar__chevron">&#9660;</span>
+      </button>
+
+      @if (showUserMenu()) {
+        <div class="topbar__dropdown">
+          <div class="topbar__dropdown-header">
+            <strong>{{ userName }}</strong>
+            <span>{{ userRole }}</span>
+          </div>
+          <div class="topbar__dropdown-divider"></div>
+          <button class="topbar__dropdown-item topbar__dropdown-item--danger" (click)="logout.emit()">
+            <span>&#128682;</span> Cerrar sesión
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</header>

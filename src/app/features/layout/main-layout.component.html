@@ -1,0 +1,25 @@
+<div class="layout">
+  @if (isMobile() && sidebarOpen()) {
+    <div class="layout__backdrop" (click)="toggleSidebar()"></div>
+  }
+
+  <app-sidebar
+    [collapsed]="!sidebarOpen()"
+    (toggleSidebar)="toggleSidebar()"
+    (logout)="onLogout()"
+  />
+
+  <div class="layout__main" [class.layout__main--expanded]="!sidebarOpen()">
+    <app-topbar
+      [pageTitle]="pageTitle"
+      [userName]="userName"
+      [userRole]="userRole"
+      (menuToggle)="toggleSidebar()"
+      (logout)="onLogout()"
+    />
+
+    <main class="layout__content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

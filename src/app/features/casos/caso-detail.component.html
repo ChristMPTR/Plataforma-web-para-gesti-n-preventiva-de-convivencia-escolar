@@ -1,0 +1,102 @@
+<div class="detail-page">
+  <button class="btn-back" (click)="goBack()">
+    <span class="material-symbols-outlined">arrow_back</span> Volver
+  </button>
+
+  <div class="loading-shimmer" *ngIf="loading">
+    <div class="shimmer-card"><div class="shimmer-line w-80"></div><div class="shimmer-line w-60"></div><div class="shimmer-line w-40"></div></div>
+  </div>
+
+  <ng-container *ngIf="!loading && caso">
+    <div class="detail-header">
+      <h1>Caso #{{ caso.id }}</h1>
+      <div class="header-actions">
+        <button class="btn btn-primary" (click)="editar()">
+          <span class="material-symbols-outlined">edit</span> Editar
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div class="card info-card">
+        <h3>Información del Caso</h3>
+        <div class="info-row"><label>Estudiante</label><span>{{ caso.estudiante_nombre || '—' }}</span></div>
+        <div class="info-row"><label>Tipo</label><span>{{ caso.tipo_caso }}</span></div>
+        <div class="info-row">
+          <label>Prioridad</label>
+          <span class="badge" [class]="prioridadClass(caso.prioridad)">{{ caso.prioridad }}</span>
+        </div>
+        <div class="info-row">
+          <label>Estado</label>
+          <span class="badge" [class]="estadoClass(caso.estado)">{{ caso.estado }}</span>
+        </div>
+        <div class="info-row"><label>Fecha</label><span>{{ caso.fecha_registro | date:'dd/MM/yyyy HH:mm' }}</span></div>
+        <div class="info-row"><label>Descripción</label><p class="desc-text">{{ caso.descripcion }}</p></div>
+      </div>
+
+      <div class="card actions-card">
+        <h3>Acciones</h3>
+        <div class="action-item">
+          <label>Cambiar Estado</label>
+          <div class="action-row">
+            <select [(ngModel)]="selectedEstado" class="form-control">
+              <option value="abierto">Abierto</option>
+              <option value="en_seguimiento">En Seguimiento</option>
+              <option value="cerrado">Cerrado</option>
+            </select>
+            <button class="btn btn-sm btn-primary" (click)="cambiarEstado()">Actualizar</button>
+          </div>
+        </div>
+        <div class="action-item">
+          <label>Nuevo Seguimiento</label>
+          <textarea [(ngModel)]="seguimientoForm.accion_realizada" class="form-control" rows="2" placeholder="Acción realizada..."></textarea>
+          <textarea [(ngModel)]="seguimientoForm.observacion" class="form-control" rows="2" placeholder="Observación (opcional)"></textarea>
+          <button class="btn btn-sm btn-secondary" (click)="agregarSeguimiento()" [disabled]="savingSeguimiento">
+            {{ savingSeguimiento ? 'Guardando...' : 'Agregar Seguimiento' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Seguimientos</h3>
+      <div class="timeline" *ngIf="seguimientos.length; else noSeguimientos">
+        <div class="timeline-item" *ngFor="let s of seguimientos">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-header">
+              <strong>{{ s.accion_realizada }}</strong>
+              <span class="timeline-date">{{ s.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <p *ngIf="s.observacion" class="timeline-obs">{{ s.observacion }}</p>
+            <span class="timeline-responsable">Por: {{ s.responsable_nombre || s.responsable || '—' }}</span>
+          </div>
+        </div>
+      </div>
+      <ng-template #noSeguimientos>
+        <div class="empty-state small"><span class="material-symbols-outlined">timeline</span><p>No hay seguimientos registrados</p></div>
+      </ng-template>
+    </div>
+
+    <div class="card" style="margin-top: 1rem;">
+      <h3>Reuniones con Apoderados</h3>
+      <div *ngIf="reuniones.length; else noReuniones">
+        <div class="timeline-item" *ngFor="let r of reuniones">
+          <div class="timeline-dot" style="background: var(--color-secondary);"></div>
+          <div class="timeline-content">
+            <div class="timeline-header">
+              <strong>Reunión con {{ r.apoderado_nombre || 'Apoderado' }}</strong>
+              <span class="timeline-date">{{ r.fecha | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <p class="timeline-obs"><strong>Motivo:</strong> {{ r.motivo }}</p>
+            <p *ngIf="r.acuerdos" class="timeline-obs"><strong>Acuerdos:</strong> {{ r.acuerdos }}</p>
+            <p *ngIf="r.observaciones" class="timeline-obs">{{ r.observaciones }}</p>
+          </div>
+        </div>
+      </div>
+      <ng-template #noReuniones>
+        <div class="empty-state small"><span class="material-symbols-outlined">groups</span><p>No hay reuniones registradas para este caso</p></div>
+      </ng-template>
+    </div>
+  </ng-container>
+</div>

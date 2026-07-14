@@ -1,0 +1,117 @@
+@use '../../../styles' as *;
+
+.casos-page { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+.page-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;
+  h1 { margin: 0; font-size: 1.75rem; font-weight: 700; color: $text; }
+  .subtitle { margin: 4px 0 0; color: #7f8c8d; font-size: 0.9rem; }
+}
+
+.filters-card {
+  background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px;
+}
+
+.filters-row {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px;
+}
+
+.filter-group {
+  display: flex; flex-direction: column; gap: 4px;
+  label { font-size: 0.8rem; font-weight: 600; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.03em; }
+}
+
+.form-control {
+  padding: 8px 12px; border: 1px solid #dce1e7; border-radius: 8px; font-size: 0.9rem; background: $bg; color: $text;
+  &:focus { outline: none; border-color: $primary-light; box-shadow: 0 0 0 3px rgba(46, 134, 193, 0.15); }
+}
+
+.btn-link {
+  background: none; border: none; color: $primary-light; cursor: pointer; font-size: 0.85rem; margin-top: 12px; padding: 0;
+  &:hover { text-decoration: underline; }
+}
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border: none; border-radius: 8px;
+  font-size: 0.9rem; font-weight: 600; cursor: pointer; text-decoration: none; transition: background 0.2s;
+}
+
+.btn-primary { background: $primary; color: white;
+  &:hover { background: #154360; }
+}
+
+.table-card {
+  background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden;
+}
+
+.table-responsive { overflow-x: auto; }
+
+table {
+  width: 100%; border-collapse: collapse;
+  th, td { text-align: left; padding: 12px 16px; font-size: 0.9rem; border-bottom: 1px solid #ecf0f1; }
+  th { font-weight: 600; color: #7f8c8d; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+  tbody tr {
+    &:hover { background: #f8f9fa; }
+    &:last-child td { border-bottom: none; }
+  }
+
+  tr.clickable { cursor: pointer; }
+}
+
+.acciones {
+  display: flex; gap: 6px;
+}
+
+.btn-icon {
+  background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px; color: #7f8c8d; display: inline-flex;
+  &:hover { background: #ecf0f1; color: $primary; }
+  span { font-size: 20px; }
+}
+
+.badge {
+  display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: capitalize;
+}
+
+.badge-primary { background: #d6eaf8; color: $primary; }
+.badge-warning { background: #fef9e7; color: #b7950b; }
+.badge-success { background: #d5f5e3; color: $secondary; }
+.badge-danger { background: #fadbd8; color: $danger; }
+.badge-dark { background: #d5d8dc; color: #5d6d7e; }
+
+.pagination {
+  display: flex; justify-content: center; gap: 4px; padding: 16px;
+}
+
+.btn-page {
+  background: white; border: 1px solid #dce1e7; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 0.85rem; color: $text;
+  &:hover:not(:disabled) { background: $bg; border-color: $primary-light; }
+  &:disabled { opacity: 0.4; cursor: default; }
+  &.active { background: $primary; color: white; border-color: $primary; }
+}
+
+.loading-shimmer {
+  background: white; border-radius: 12px; padding: 8px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.shimmer-row { padding: 16px 0; border-bottom: 1px solid #ecf0f1; }
+.shimmer-line {
+  height: 14px; width: 100%; background: linear-gradient(90deg, #ecf0f1 25%, #f5f6fa 50%, #ecf0f1 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.empty-state {
+  text-align: center; padding: 60px 20px; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  span { font-size: 56px; color: #bdc3c7; }
+  h3 { margin: 16px 0 4px; color: $text; }
+  p { color: #95a5a6; margin: 0 0 20px; }
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal; line-height: 1; letter-spacing: normal;
+  text-transform: none; white-space: nowrap; word-wrap: normal; direction: ltr; vertical-align: middle;
+}

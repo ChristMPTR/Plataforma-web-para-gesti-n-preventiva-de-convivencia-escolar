@@ -1,0 +1,109 @@
+<div class="page">
+  <header class="page-header">
+    <h1>Reportes</h1>
+  </header>
+
+  <section class="filters-card">
+    <h3>Filtros del Reporte</h3>
+    <div class="filters-row">
+      <div class="filter-group">
+        <label>Fecha Desde</label>
+        <input type="date" [(ngModel)]="desde" class="form-control" />
+      </div>
+      <div class="filter-group">
+        <label>Fecha Hasta</label>
+        <input type="date" [(ngModel)]="hasta" class="form-control" />
+      </div>
+      <div class="filter-group">
+        <label>Curso</label>
+        <select [(ngModel)]="cursoFilter" class="form-control">
+          <option value="">Todos</option>
+          <option *ngFor="let c of cursos" [value]="c.id">{{ c.nivel }} {{ c.letra }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Tipo de Caso</label>
+        <select [(ngModel)]="tipoFilter" class="form-control">
+          <option value="">Todos</option>
+          <option *ngFor="let t of tipoOptions" [value]="t.value">{{ t.label }}</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" (click)="generarReporte()" [disabled]="loading">
+      <span class="material-symbols-outlined">{{ loading ? 'hourglass_top' : 'summarize' }}</span>
+      {{ loading ? 'Generando...' : 'Generar Reporte' }}
+    </button>
+  </section>
+
+  <ng-container *ngIf="generated">
+    <section class="summary-section">
+      <h3>Resumen</h3>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <span class="summary-value">{{ totalEnPeriodo }}</span>
+          <span class="summary-label">Total Casos en Período</span>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="card">
+          <h4>Por Tipo</h4>
+          <div class="stat-list" *ngIf="porTipo.length; else noData">
+            <div class="stat-bar-item" *ngFor="let item of porTipo">
+              <span class="stat-bar-label">{{ item.tipo }}</span>
+              <div class="stat-bar-track">
+                <div class="stat-bar-fill" [style.width.%]="(item.cantidad / totalEnPeriodo) * 100"></div>
+              </div>
+              <span class="stat-bar-value">{{ item.cantidad }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h4>Por Estado</h4>
+          <div class="stat-list" *ngIf="porEstado.length; else noData">
+            <div class="stat-bar-item" *ngFor="let item of porEstado">
+              <span class="stat-bar-label">{{ item.estado }}</span>
+              <div class="stat-bar-track">
+                <div class="stat-bar-fill fill-secondary" [style.width.%]="(item.cantidad / totalEnPeriodo) * 100"></div>
+              </div>
+              <span class="stat-bar-value">{{ item.cantidad }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noData><p class="text-muted">Sin datos</p></ng-template>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <h3>Casos en el Período ({{ casos.length }})</h3>
+        <div class="export-buttons">
+          <button class="btn btn-outline" (click)="exportarPdf()">
+            <span class="material-symbols-outlined">picture_as_pdf</span> Exportar PDF
+          </button>
+          <button class="btn btn-outline" (click)="exportarExcel()">
+            <span class="material-symbols-outlined">table</span> Exportar Excel
+          </button>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Estudiante</th><th>Tipo</th><th>Prioridad</th><th>Estado</th><th>Fecha</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of casos">
+              <td>{{ c.id }}</td>
+              <td>{{ c.estudiante_nombre }}</td>
+              <td>{{ c.tipo_caso }}</td>
+              <td><span class="badge" [class]="prioridadClass(c.prioridad)">{{ c.prioridad }}</span></td>
+              <td><span class="badge" [class]="estadoClass(c.estado)">{{ c.estado }}</span></td>
+              <td>{{ c.created_at | date:'dd/MM/yyyy' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+</div>

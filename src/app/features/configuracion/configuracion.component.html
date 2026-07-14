@@ -1,0 +1,173 @@
+<div class="page">
+  <header class="page-header">
+    <h1>Configuración</h1>
+  </header>
+
+  <div class="tabs">
+    <button [class.active]="activeTab === 'perfil'" (click)="setTab('perfil')">
+      <span class="material-symbols-outlined">person</span> Perfil
+    </button>
+    <button [class.active]="activeTab === 'colegio'" (click)="setTab('colegio')">
+      <span class="material-symbols-outlined">school</span> Colegio
+    </button>
+    <button *ngIf="isAdmin" [class.active]="activeTab === 'usuarios'" (click)="setTab('usuarios')">
+      <span class="material-symbols-outlined">group</span> Usuarios
+    </button>
+    <button [class.active]="activeTab === 'preferencias'" (click)="setTab('preferencias')">
+      <span class="material-symbols-outlined">settings</span> Preferencias
+    </button>
+  </div>
+
+  <!-- Perfil -->
+  <div class="tab-content" *ngIf="activeTab === 'perfil'">
+    <div class="card">
+      <h3>Información del Perfil</h3>
+      <div class="alert alert-success" *ngIf="profileSuccess">{{ profileSuccess }}</div>
+      <div class="alert alert-error" *ngIf="profileError">{{ profileError }}</div>
+      <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
+        <div class="form-group">
+          <label>Nombre</label>
+          <input type="text" formControlName="nombre" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Correo Electrónico</label>
+          <input type="email" formControlName="correo" class="form-control" />
+        </div>
+        <button type="submit" class="btn btn-primary" [disabled]="profileSaving">
+          {{ profileSaving ? 'Guardando...' : 'Actualizar Perfil' }}
+        </button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3>Cambiar Contraseña</h3>
+      <div class="alert alert-success" *ngIf="passwordSuccess">{{ passwordSuccess }}</div>
+      <div class="alert alert-error" *ngIf="passwordError">{{ passwordError }}</div>
+      <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+        <div class="form-group">
+          <label>Contraseña Actual</label>
+          <input type="password" formControlName="currentPassword" class="form-control" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nueva Contraseña</label>
+            <input type="password" formControlName="newPassword" class="form-control" />
+            <div class="field-error" *ngIf="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched">
+              Mínimo 6 caracteres
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Confirmar Contraseña</label>
+            <input type="password" formControlName="confirmPassword" class="form-control" />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" [disabled]="passwordSaving">
+          {{ passwordSaving ? 'Guardando...' : 'Cambiar Contraseña' }}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Colegio -->
+  <div class="tab-content" *ngIf="activeTab === 'colegio'">
+    <div class="card">
+      <h3>Información del Colegio</h3>
+      <p class="text-muted">La configuración del colegio estará disponible próximamente. Aquí podrás configurar el nombre, dirección y otros datos institucionales.</p>
+      <div class="placeholder-form">
+        <div class="form-group"><label>Nombre del Colegio</label><input type="text" class="form-control" placeholder="Mi Colegio" disabled /></div>
+        <div class="form-group"><label>Dirección</label><input type="text" class="form-control" placeholder="Dirección" disabled /></div>
+        <div class="form-group"><label>Teléfono</label><input type="text" class="form-control" placeholder="Teléfono" disabled /></div>
+        <button class="btn btn-primary" disabled>Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Usuarios -->
+  <div class="tab-content" *ngIf="activeTab === 'usuarios' && isAdmin">
+    <div class="section-header">
+      <h3>Usuarios del Sistema</h3>
+      <button class="btn btn-primary" (click)="openCreateUser()">
+        <span class="material-symbols-outlined">add</span> Nuevo Usuario
+      </button>
+    </div>
+
+    <div class="loading-shimmer" *ngIf="usuariosLoading">
+      <div class="shimmer-row" *ngFor="let _ of [1,2,3]"><div class="shimmer-line"></div></div>
+    </div>
+
+    <div class="table-card" *ngIf="!usuariosLoading && usuarios.length">
+      <div class="table-responsive">
+        <table>
+          <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Acciones</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let u of usuarios">
+              <td><strong>{{ u.nombre }}</strong></td>
+              <td>{{ u.correo }}</td>
+              <td><span class="badge" [class]="getRolClass(u.rol)">{{ u.rol }}</span></td>
+              <td class="acciones">
+                <button class="btn-icon" title="Editar" (click)="openEditUser(u)"><span class="material-symbols-outlined">edit</span></button>
+                <button class="btn-icon btn-icon-danger" title="Eliminar" (click)="deleteUser(u)"><span class="material-symbols-outlined">delete</span></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preferencias -->
+  <div class="tab-content" *ngIf="activeTab === 'preferencias'">
+    <div class="card">
+      <h3>Preferencias</h3>
+      <p class="text-muted">Las preferencias de configuración estarán disponibles en una próxima actualización.</p>
+      <div class="placeholder-list">
+        <div class="pref-item"><span>Idioma</span><span class="text-muted">Español</span></div>
+        <div class="pref-item"><span>Notificaciones por correo</span><span class="text-muted">Próximamente</span></div>
+        <div class="pref-item"><span>Tema</span><span class="text-muted">Claro</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Modal -->
+  <div class="modal-overlay" *ngIf="showUserModal" (click)="closeUserModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditUser ? 'Editar' : 'Nuevo' }} Usuario</h2>
+        <button class="btn-icon" (click)="closeUserModal()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+
+      <div class="alert alert-success" *ngIf="userSuccess">{{ userSuccess }}</div>
+      <div class="alert alert-error" *ngIf="userError">{{ userError }}</div>
+
+      <form [formGroup]="userForm" (ngSubmit)="saveUser()">
+        <div class="form-group">
+          <label>Nombre *</label>
+          <input type="text" formControlName="nombre" class="form-control" />
+          <div class="field-error" *ngIf="userForm.get('nombre')?.invalid && userForm.get('nombre')?.touched">Requerido</div>
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" formControlName="correo" class="form-control" />
+          <div class="field-error" *ngIf="userForm.get('correo')?.invalid && userForm.get('correo')?.touched">Correo válido requerido</div>
+        </div>
+        <div class="form-group">
+          <label>Rol</label>
+          <select formControlName="rol" class="form-control">
+            <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+          </select>
+        </div>
+        <div class="form-group" *ngIf="!isEditUser">
+          <label>Contraseña *</label>
+          <input type="password" formControlName="password" class="form-control" />
+          <div class="field-error" *ngIf="userForm.get('password')?.invalid && userForm.get('password')?.touched">Mínimo 6 caracteres</div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeUserModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="userSaving">
+            {{ userSaving ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

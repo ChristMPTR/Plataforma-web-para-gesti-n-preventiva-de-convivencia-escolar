@@ -1,0 +1,106 @@
+<div class="casos-page">
+  <header class="page-header">
+    <div>
+      <h1>Casos de Convivencia</h1>
+      <p class="subtitle">{{ total }} casos registrados</p>
+    </div>
+    <a routerLink="/casos/nuevo" class="btn btn-primary">
+      <span class="material-symbols-outlined">add</span>
+      Nuevo Caso
+    </a>
+  </header>
+
+  <section class="filters-card">
+    <div class="filters-row">
+      <div class="filter-group">
+        <label>Buscar</label>
+        <input type="text" [(ngModel)]="search" (keyup.enter)="onSearch()" placeholder="Buscar por estudiante..." class="form-control" />
+      </div>
+      <div class="filter-group">
+        <label>Tipo</label>
+        <select [(ngModel)]="tipoFilter" (change)="onSearch()" class="form-control">
+          <option value="">Todos</option>
+          <option *ngFor="let t of tipoOptions" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Estado</label>
+        <select [(ngModel)]="estadoFilter" (change)="onSearch()" class="form-control">
+          <option value="">Todos</option>
+          <option *ngFor="let e of estadoOptions" [value]="e">{{ e }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Prioridad</label>
+        <select [(ngModel)]="prioridadFilter" (change)="onSearch()" class="form-control">
+          <option value="">Todas</option>
+          <option *ngFor="let p of prioridadOptions" [value]="p">{{ p }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Desde</label>
+        <input type="date" [(ngModel)]="desde" (change)="onSearch()" class="form-control" />
+      </div>
+      <div class="filter-group">
+        <label>Hasta</label>
+        <input type="date" [(ngModel)]="hasta" (change)="onSearch()" class="form-control" />
+      </div>
+    </div>
+    <button class="btn btn-link" (click)="clearFilters()">Limpiar filtros</button>
+  </section>
+
+  <div class="loading-shimmer" *ngIf="loading">
+    <div class="shimmer-row" *ngFor="let _ of [1,2,3,4,5]"><div class="shimmer-line"></div></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div class="table-card" *ngIf="casos.length; else emptyState">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Estudiante</th>
+              <th>Tipo</th>
+              <th>Prioridad</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of casos" (click)="verCaso(c.id!)" class="clickable">
+              <td>{{ c.id }}</td>
+              <td>{{ c.estudiante_nombre }}</td>
+              <td>{{ c.tipo_caso }}</td>
+              <td><span class="badge" [class]="prioridadClass(c.prioridad)">{{ c.prioridad }}</span></td>
+              <td><span class="badge" [class]="estadoClass(c.estado)">{{ c.estado }}</span></td>
+              <td>{{ c.created_at | date:'dd/MM/yyyy' }}</td>
+              <td class="acciones">
+                <button class="btn-icon" title="Ver" (click)="verCaso(c.id!)"><span class="material-symbols-outlined">visibility</span></button>
+                <button class="btn-icon" title="Editar" (click)="editarCaso(c.id!, $event)"><span class="material-symbols-outlined">edit</span></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button [disabled]="page === 1" (click)="changePage(page - 1)" class="btn-page">&laquo;</button>
+        <span *ngFor="let p of [].constructor(totalPages); let i = index">
+          <button [class.active]="page === i + 1" (click)="changePage(i + 1)" class="btn-page">{{ i + 1 }}</button>
+        </span>
+        <button [disabled]="page === totalPages" (click)="changePage(page + 1)" class="btn-page">&raquo;</button>
+      </div>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <span class="material-symbols-outlined">inbox</span>
+        <h3>No hay casos registrados</h3>
+        <p>Comienza creando un nuevo caso de convivencia escolar.</p>
+        <a routerLink="/casos/nuevo" class="btn btn-primary">Crear Caso</a>
+      </div>
+    </ng-template>
+  </ng-container>
+</div>

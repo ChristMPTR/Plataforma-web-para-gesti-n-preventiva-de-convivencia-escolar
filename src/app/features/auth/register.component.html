@@ -1,0 +1,131 @@
+<div class="register">
+  <div class="register__card">
+    <div class="register__brand">
+      <span class="register__icon">&#10024;</span>
+      <h1 class="register__title">NEXORA</h1>
+      <p class="register__subtitle">Crear cuenta — Administrador</p>
+    </div>
+
+    <form class="register__form" [formGroup]="form" (ngSubmit)="onSubmit()">
+      @if (error()) {
+        <div class="register__error">{{ error() }}</div>
+      }
+
+      <div class="form-group">
+        <label class="form-label" for="nombre">Nombre completo</label>
+        <input
+          id="nombre"
+          class="form-input"
+          [class.form-input--error]="nombre.invalid && nombre.touched"
+          type="text"
+          formControlName="nombre"
+          placeholder="Carlos Mendoza"
+          autocomplete="name"
+        />
+        @if (nombre.invalid && nombre.touched) {
+          <span class="form-error">
+            @if (nombre.errors?.['required']) { El nombre es obligatorio }
+            @if (nombre.errors?.['minlength']) { Mínimo 3 caracteres }
+          </span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="register-email">Correo electrónico</label>
+        <input
+          id="register-email"
+          class="form-input"
+          [class.form-input--error]="email.invalid && email.touched"
+          type="email"
+          formControlName="email"
+          placeholder="correo@ejemplo.com"
+          autocomplete="email"
+        />
+        @if (email.invalid && email.touched) {
+          <span class="form-error">
+            @if (email.errors?.['required']) { El correo es obligatorio }
+            @if (email.errors?.['email']) { Ingresa un correo válido }
+          </span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="colegioId">Colegio</label>
+        <select
+          id="colegioId"
+          class="form-input form-select"
+          [class.form-input--error]="colegioId.invalid && colegioId.touched"
+          formControlName="colegioId"
+        >
+          <option value="" disabled>Selecciona un colegio</option>
+          @for (c of colegios; track c.id) {
+            <option [value]="c.id">{{ c.nombre }}</option>
+          }
+        </select>
+        @if (colegioId.invalid && colegioId.touched) {
+          <span class="form-error">Selecciona un colegio</span>
+        }
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="register-password">Contraseña</label>
+          <input
+            id="register-password"
+            class="form-input"
+            [class.form-input--error]="password.invalid && password.touched"
+            type="password"
+            formControlName="password"
+            placeholder="••••••••"
+            autocomplete="new-password"
+          />
+          @if (password.invalid && password.touched) {
+            <span class="form-error">
+              @if (password.errors?.['required']) { Obligatoria }
+              @if (password.errors?.['minlength']) { Mínimo 8 caracteres }
+            </span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="confirmPassword">Confirmar contraseña</label>
+          <input
+            id="confirmPassword"
+            class="form-input"
+            [class.form-input--error]="(confirmPassword.invalid || form.errors?.['passwordsMismatch']) && confirmPassword.touched"
+            type="password"
+            formControlName="confirmPassword"
+            placeholder="••••••••"
+            autocomplete="new-password"
+          />
+          @if (confirmPassword.touched) {
+            @if (confirmPassword.errors?.['required']) {
+              <span class="form-error">Confirma la contraseña</span>
+            }
+            @if (form.errors?.['passwordsMismatch'] && confirmPassword.valid) {
+              <span class="form-error">Las contraseñas no coinciden</span>
+            }
+          }
+        </div>
+      </div>
+
+      <button
+        class="btn btn--primary btn--full"
+        type="submit"
+        [disabled]="loading()"
+      >
+        @if (loading()) {
+          <span class="btn__spinner"></span>
+          Creando cuenta...
+        } @else {
+          Crear Cuenta
+        }
+      </button>
+    </form>
+
+    <div class="register__footer">
+      <span>¿Ya tienes cuenta?</span>
+      <a routerLink="/login" class="register__link">Inicia sesión</a>
+    </div>
+  </div>
+</div>

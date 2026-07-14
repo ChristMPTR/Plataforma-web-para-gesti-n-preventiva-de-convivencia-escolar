@@ -1,0 +1,131 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Cursos</h1>
+      <p class="subtitle">{{ total }} cursos registrados</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <span class="material-symbols-outlined">add</span> Nuevo Curso
+    </button>
+  </header>
+
+  <section class="filters-bar">
+    <select [(ngModel)]="nivelFilter" (change)="onFilter()" class="form-control">
+      <option value="">Todos los niveles</option>
+      <option *ngFor="let n of niveles" [value]="n">{{ n }}</option>
+    </select>
+    <select [(ngModel)]="anioFilter" (change)="onFilter()" class="form-control w-auto">
+      <option [value]="undefined">Todos los anios</option>
+      <option *ngFor="let a of anios" [value]="a">{{ a }}</option>
+    </select>
+  </section>
+
+  <div class="loading-shimmer" *ngIf="loading">
+    <div class="shimmer-row" *ngFor="let _ of [1,2,3,4]"><div class="shimmer-line"></div></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div class="detail-card" *ngIf="selectedCursoDetail">
+      <div class="detail-header">
+        <h2>{{ selectedCursoDetail.nivel }} {{ selectedCursoDetail.letra }} - {{ selectedCursoDetail.anio }}</h2>
+        <button class="btn btn-secondary" (click)="cerrarDetalle()"><span class="material-symbols-outlined">close</span> Cerrar</button>
+      </div>
+      <h3>Estudiantes del Curso ({{ estudiantesCurso.length }})</h3>
+      <div class="table-responsive" *ngIf="estudiantesCurso.length; else noEstudiantes">
+        <table>
+          <thead><tr><th>Nombre</th><th>RUT</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let e of estudiantesCurso">
+              <td>{{ e.estudiantes?.nombre }}</td>
+              <td>{{ e.estudiantes?.rut }}</td>
+              <td><span class="badge" [class]="getEstadoClass(e.estudiantes?.estado ?? 'activo')">{{ e.estudiantes?.estado ?? 'activo' }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noEstudiantes>
+        <div class="empty-state small"><span class="material-symbols-outlined">persons</span><p>No hay estudiantes en este curso</p></div>
+      </ng-template>
+    </div>
+
+    <div class="table-card" *ngIf="!selectedCursoDetail && cursos.length; else emptyState">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr><th>Nivel</th><th>Letra</th><th>Año</th><th>Estudiantes</th><th>Estado</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of cursos" (click)="verDetalle(c)" class="clickable">
+              <td><strong>{{ c.nivel }}</strong></td>
+              <td>{{ c.letra }}</td>
+              <td>{{ c.anio }}</td>
+              <td>{{ c.estudiantes?.length ?? 0 }}</td>
+              <td><span class="badge" [class]="getEstadoClass(c.estado ?? 'activo')">{{ c.estado ?? 'activo' }}</span></td>
+              <td class="acciones" (click)="$event.stopPropagation()">
+                <button class="btn-icon" title="Editar" (click)="openEdit(c, $event)"><span class="material-symbols-outlined">edit</span></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button [disabled]="page === 1" (click)="changePage(page - 1)" class="btn-page">&laquo;</button>
+        <span *ngFor="let p of [].constructor(totalPages); let i = index">
+          <button [class.active]="page === i + 1" (click)="changePage(i + 1)" class="btn-page">{{ i + 1 }}</button>
+        </span>
+        <button [disabled]="page === totalPages" (click)="changePage(page + 1)" class="btn-page">&raquo;</button>
+      </div>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <span class="material-symbols-outlined">school</span>
+        <h3>No hay cursos</h3>
+        <p>Crea el primer curso para comenzar.</p>
+        <button class="btn btn-primary" (click)="openCreate()">Crear Curso</button>
+      </div>
+    </ng-template>
+  </ng-container>
+
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEdit ? 'Editar' : 'Nuevo' }} Curso</h2>
+        <button class="btn-icon" (click)="closeModal()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+
+      <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
+      <div class="alert alert-error" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label>Nivel *</label>
+          <select formControlName="nivel" class="form-control">
+            <option value="">Seleccionar...</option>
+            <option *ngFor="let n of niveles" [value]="n">{{ n }}</option>
+          </select>
+          <div class="field-error" *ngIf="form.get('nivel')?.invalid && form.get('nivel')?.touched">Requerido</div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Letra *</label>
+            <input type="text" formControlName="letra" class="form-control" maxlength="2" placeholder="A" />
+            <div class="field-error" *ngIf="form.get('letra')?.invalid && form.get('letra')?.touched">Requerido</div>
+          </div>
+          <div class="form-group">
+            <label>Anio *</label>
+            <select formControlName="anio" class="form-control">
+              <option *ngFor="let a of anios" [value]="a">{{ a }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving">
+            {{ saving ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

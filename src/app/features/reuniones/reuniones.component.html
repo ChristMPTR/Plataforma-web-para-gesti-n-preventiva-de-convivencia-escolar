@@ -1,0 +1,112 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Reuniones con Apoderados</h1>
+      <p class="subtitle">{{ total }} reuniones realizadas</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <span class="material-symbols-outlined">add</span> Nueva Reunión
+    </button>
+  </header>
+
+  <div class="loading-shimmer" *ngIf="loading">
+    <div class="shimmer-row" *ngFor="let _ of [1,2,3,4]"><div class="shimmer-line"></div></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div class="table-card" *ngIf="reuniones.length; else emptyState">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr><th>Fecha</th><th>Apoderado</th><th>Motivo</th><th>Caso</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of reuniones">
+              <td>{{ r.fecha | date:'dd/MM/yyyy' }}</td>
+              <td><strong>{{ r.apoderado }}</strong></td>
+              <td>{{ r.motivo }}</td>
+              <td>
+                <a *ngIf="r.caso_id" class="link" [routerLink]="['/casos', r.caso_id]">Caso #{{ r.caso_id }}</a>
+                <span *ngIf="!r.caso_id" class="no-link">—</span>
+              </td>
+              <td class="acciones">
+                <button class="btn-icon" title="Editar" (click)="openEdit(r, $event)"><span class="material-symbols-outlined">edit</span></button>
+                <button class="btn-icon" title="Descargar Acta" (click)="descargarActa(r)"><span class="material-symbols-outlined">download</span></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button [disabled]="page === 1" (click)="changePage(page - 1)" class="btn-page">&laquo;</button>
+        <span *ngFor="let p of [].constructor(totalPages); let i = index">
+          <button [class.active]="page === i + 1" (click)="changePage(i + 1)" class="btn-page">{{ i + 1 }}</button>
+        </span>
+        <button [disabled]="page === totalPages" (click)="changePage(page + 1)" class="btn-page">&raquo;</button>
+      </div>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <span class="material-symbols-outlined">event</span>
+        <h3>No hay reuniones registradas</h3>
+        <p>Agenda la primera reunión con apoderados.</p>
+        <button class="btn btn-primary" (click)="openCreate()">Agendar Reunión</button>
+      </div>
+    </ng-template>
+  </ng-container>
+
+  <!-- Modal -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEdit ? 'Editar' : 'Nueva' }} Reunión</h2>
+        <button class="btn-icon" (click)="closeModal()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+
+      <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
+      <div class="alert alert-error" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fecha *</label>
+            <input type="date" formControlName="fecha" class="form-control" />
+            <div class="field-error" *ngIf="form.get('fecha')?.invalid && form.get('fecha')?.touched">Requerido</div>
+          </div>
+          <div class="form-group">
+            <label>Caso Relacionado</label>
+            <select formControlName="caso_id" class="form-control">
+              <option [value]="null">Sin caso</option>
+              <option *ngFor="let c of casos" [value]="c.id">Caso #{{ c.id }} - {{ c.tipo_caso }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Apoderado *</label>
+          <input type="text" formControlName="apoderado" class="form-control" placeholder="Nombre del apoderado" />
+          <div class="field-error" *ngIf="form.get('apoderado')?.invalid && form.get('apoderado')?.touched">Requerido</div>
+        </div>
+        <div class="form-group">
+          <label>Motivo *</label>
+          <input type="text" formControlName="motivo" class="form-control" placeholder="Motivo de la reunión" />
+          <div class="field-error" *ngIf="form.get('motivo')?.invalid && form.get('motivo')?.touched">Requerido</div>
+        </div>
+        <div class="form-group">
+          <label>Acuerdos</label>
+          <textarea formControlName="acuerdos" class="form-control" rows="4" placeholder="Acuerdos tomados en la reunión..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Observación</label>
+          <textarea formControlName="observacion" class="form-control" rows="3" placeholder="Observaciones adicionales..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving">
+            {{ saving ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

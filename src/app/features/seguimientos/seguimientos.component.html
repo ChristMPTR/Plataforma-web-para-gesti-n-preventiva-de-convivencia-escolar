@@ -1,0 +1,63 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Seguimientos</h1>
+      <p class="subtitle">{{ total }} seguimientos registrados</p>
+    </div>
+  </header>
+
+  <section class="filters-bar">
+    <div class="filter-group">
+      <label>Desde</label>
+      <input type="date" [(ngModel)]="desde" (change)="onFilter()" class="form-control" />
+    </div>
+    <div class="filter-group">
+      <label>Hasta</label>
+      <input type="date" [(ngModel)]="hasta" (change)="onFilter()" class="form-control" />
+    </div>
+    <div class="filter-group">
+      <label>Responsable</label>
+      <input type="text" [(ngModel)]="responsable" (keyup.enter)="onFilter()" class="form-control" placeholder="Nombre..." />
+    </div>
+  </section>
+
+  <div class="loading-shimmer" *ngIf="loading">
+    <div class="shimmer-row" *ngFor="let _ of [1,2,3,4]"><div class="shimmer-line"></div></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div class="table-card" *ngIf="seguimientos.length; else emptyState">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr><th>Fecha</th><th>Caso</th><th>Acción</th><th>Responsable</th><th>Descripción</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of seguimientos">
+              <td>{{ s.fecha || s.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td><a class="link" (click)="verCaso(s.id_caso)">Caso #{{ s.id_caso }}</a></td>
+              <td><strong>{{ s.accion_realizada }}</strong></td>
+              <td>{{ s.responsable_nombre || s.responsable || '—' }}</td>
+              <td class="desc-cell">{{ s.observacion }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button [disabled]="page === 1" (click)="changePage(page - 1)" class="btn-page">&laquo;</button>
+        <span *ngFor="let p of [].constructor(totalPages); let i = index">
+          <button [class.active]="page === i + 1" (click)="changePage(i + 1)" class="btn-page">{{ i + 1 }}</button>
+        </span>
+        <button [disabled]="page === totalPages" (click)="changePage(page + 1)" class="btn-page">&raquo;</button>
+      </div>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <span class="material-symbols-outlined">timeline</span>
+        <h3>No hay seguimientos</h3>
+        <p>Aún no se han registrado seguimientos en ningún caso.</p>
+      </div>
+    </ng-template>
+  </ng-container>
+</div>

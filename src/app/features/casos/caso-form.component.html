@@ -1,0 +1,95 @@
+<div class="form-page">
+  <header class="page-header">
+    <h1>{{ isEdit ? 'Editar Caso' : 'Nuevo Caso' }}</h1>
+  </header>
+
+  <div class="loading-shimmer" *ngIf="loading">
+    <div class="shimmer-line" *ngFor="let _ of [1,2,3,4,5]"></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div class="alert alert-success" *ngIf="successMsg">
+      <span class="material-symbols-outlined">check_circle</span> {{ successMsg }}
+    </div>
+    <div class="alert alert-error" *ngIf="errorMsg">
+      <span class="material-symbols-outlined">error</span> {{ errorMsg }}
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-card">
+      <div class="form-section">
+        <h3>Información del Caso</h3>
+
+        <div class="form-group">
+          <label>Estudiante *</label>
+          <div class="searchable-select">
+            <input type="text" [(ngModel)]="estudianteSearch" [ngModelOptions]="{standalone: true}" placeholder="Buscar estudiante por nombre o RUT..." class="form-control" />
+            <div class="search-results" *ngIf="estudianteSearch && filterEstudiantes().length">
+              <div class="search-item" *ngFor="let e of filterEstudiantes()" (click)="selectEstudiante(e)">
+                {{ e.nombre }} <small>{{ e.rut }}</small>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-sm btn-link" *ngIf="estudianteSearch" (click)="clearEstudiante()">Limpiar</button>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Caso *</label>
+            <select formControlName="tipo_caso" class="form-control">
+              <option value="">Seleccionar...</option>
+              <option *ngFor="let t of tipoOptions" [value]="t">{{ t | titlecase }}</option>
+            </select>
+            <div class="field-error" *ngIf="form.get('tipo_caso')?.invalid && form.get('tipo_caso')?.touched">Campo requerido</div>
+          </div>
+          <div class="form-group">
+            <label>Prioridad *</label>
+            <select formControlName="prioridad" class="form-control">
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+              <option value="urgente">Urgente</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Descripción *</label>
+          <textarea formControlName="descripcion" rows="5" class="form-control" placeholder="Describe la situación..."></textarea>
+          <div class="field-error" *ngIf="form.get('descripcion')?.invalid && form.get('descripcion')?.touched">Campo requerido</div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="section-header">
+          <h3>Involucrados</h3>
+          <button type="button" class="btn btn-outline" (click)="addInvolucrado()">
+            <span class="material-symbols-outlined">add</span> Agregar
+          </button>
+        </div>
+
+        <div formArrayName="involucrados">
+          <div class="involucrado-row" *ngFor="let inv of involucrados.controls; let i = index" [formGroupName]="i">
+            <select formControlName="tipo" class="form-control">
+              <option value="afectado">Afectado</option>
+              <option value="involucrado">Involucrado</option>
+              <option value="funcionario">Funcionario</option>
+              <option value="apoderado">Apoderado</option>
+            </select>
+            <input type="text" formControlName="nombre_externo" class="form-control" placeholder="Nombre (si no es estudiante)" />
+            <button type="button" class="btn-icon btn-icon-danger" (click)="removeInvolucrado(i)">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          </div>
+        </div>
+        <p class="empty-hint" *ngIf="involucrados.length === 0">No hay involucrados agregados. Haz clic en "Agregar".</p>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          {{ saving ? 'Guardando...' : 'Guardar Caso' }}
+        </button>
+      </div>
+    </form>
+  </ng-container>
+</div>

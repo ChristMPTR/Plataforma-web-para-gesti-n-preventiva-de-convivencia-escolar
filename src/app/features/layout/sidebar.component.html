@@ -1,0 +1,45 @@
+<aside class="sidebar" [class.sidebar--collapsed]="collapsed">
+  <div class="sidebar__header">
+    <div class="sidebar__logo">
+      <span class="sidebar__logo-icon">&#10024;</span>
+      <div class="sidebar__logo-text" [class.sidebar__logo-text--hidden]="collapsed">
+        <h1 class="sidebar__title">NEXORA</h1>
+        <p class="sidebar__subtitle">Convivencia Escolar</p>
+      </div>
+    </div>
+    <button class="sidebar__toggle" (click)="toggleSidebar.emit()" type="button" aria-label="Toggle sidebar">
+      <span class="sidebar__toggle-icon">&#9776;</span>
+    </button>
+  </div>
+
+  <nav class="sidebar__nav">
+    @for (item of navItems; track item.route) {
+      <a
+        class="sidebar__nav-item"
+        [class.sidebar__nav-item--collapsed]="collapsed"
+        [routerLink]="item.route"
+        routerLinkActive="sidebar__nav-item--active"
+        [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+      >
+        <span class="sidebar__nav-icon">{{ item.icon }}</span>
+        <span class="sidebar__nav-label" [class.sidebar__nav-label--hidden]="collapsed">
+          {{ item.label }}
+        </span>
+      </a>
+    }
+  </nav>
+
+  <div class="sidebar__footer">
+    <div class="sidebar__user" [class.sidebar__user--collapsed]="collapsed">
+      <div class="sidebar__avatar">{{ userInitials }}</div>
+      <div class="sidebar__user-info" [class.sidebar__user-info--hidden]="collapsed">
+        <span class="sidebar__user-name">{{ userName }}</span>
+        <span class="sidebar__user-role">{{ userRole }}</span>
+      </div>
+    </div>
+    <button class="sidebar__logout" (click)="logout.emit()" type="button" title="Cerrar sesión">
+      <span class="sidebar__logout-icon">&#128682;</span>
+      <span class="sidebar__logout-label" [class.sidebar__logout-label--hidden]="collapsed">Cerrar sesión</span>
+    </button>
+  </div>
+</aside>

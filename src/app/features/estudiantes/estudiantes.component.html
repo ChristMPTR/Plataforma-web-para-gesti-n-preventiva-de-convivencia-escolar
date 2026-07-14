@@ -1,0 +1,97 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Estudiantes</h1>
+      <p class="subtitle">{{ total }} estudiantes registrados</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <span class="material-symbols-outlined">add</span> Nuevo Estudiante
+    </button>
+  </header>
+
+  <section class="filters-bar">
+    <input type="text" [(ngModel)]="search" (keyup.enter)="onSearch()" placeholder="Buscar por nombre o DNI..." class="form-control" />
+    <button class="btn btn-primary" (click)="onSearch()"><span class="material-symbols-outlined">search</span></button>
+  </section>
+
+  <div class="loading-shimmer" *ngIf="loading">
+    <div class="shimmer-row" *ngFor="let _ of [1,2,3,4]"><div class="shimmer-line"></div></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div class="table-card" *ngIf="estudiantes.length; else emptyState">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr><th>Nombre</th><th>RUT</th><th>Curso</th><th>Estado</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of estudiantes">
+              <td><strong>{{ e.nombre }}</strong></td>
+              <td>{{ e.rut }}</td>
+              <td>{{ e.curso_actual }}</td>
+              <td><span class="badge" [class]="getEstadoClass(e.estado)">{{ e.estado === 'activo' ? 'Activo' : 'Inactivo' }}</span></td>
+              <td class="acciones">
+                <button class="btn-icon" title="Editar" (click)="openEdit(e, $event)"><span class="material-symbols-outlined">edit</span></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button [disabled]="page === 1" (click)="changePage(page - 1)" class="btn-page">&laquo;</button>
+        <span *ngFor="let p of [].constructor(totalPages); let i = index">
+          <button [class.active]="page === i + 1" (click)="changePage(i + 1)" class="btn-page">{{ i + 1 }}</button>
+        </span>
+        <button [disabled]="page === totalPages" (click)="changePage(page + 1)" class="btn-page">&raquo;</button>
+      </div>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <span class="material-symbols-outlined">persons</span>
+        <h3>No hay estudiantes</h3>
+        <p>Agrega el primer estudiante para comenzar.</p>
+        <button class="btn btn-primary" (click)="openCreate()">Agregar Estudiante</button>
+      </div>
+    </ng-template>
+  </ng-container>
+
+  <!-- Modal -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEdit ? 'Editar' : 'Nuevo' }} Estudiante</h2>
+        <button class="btn-icon" (click)="closeModal()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+
+      <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
+      <div class="alert alert-error" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label>Nombre *</label>
+          <input type="text" formControlName="nombre" class="form-control" placeholder="Nombre completo" />
+          <div class="field-error" *ngIf="form.get('nombre')?.invalid && form.get('nombre')?.touched">Requerido</div>
+        </div>
+        <div class="form-group">
+          <label>RUT</label>
+          <input type="text" formControlName="rut" class="form-control" placeholder="12.345.678-9" />
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select formControlName="estado" class="form-control">
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving">
+            {{ saving ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
