@@ -126,7 +126,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   }
 
   getPrioridadClass(p: string): string {
-    const map: Record<string, string> = { baja: 'badge-success', media: 'badge-warning', alta: 'badge-danger', critica: 'badge-dark' };
+    const map: Record<string, string> = { baja: 'badge-success', media: 'badge-warning', alta: 'badge-danger', urgente: 'badge-dark', critica: 'badge-dark' };
     return map[p] ?? '';
   }
 

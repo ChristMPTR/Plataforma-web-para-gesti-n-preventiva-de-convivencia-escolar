@@ -115,11 +115,18 @@ export class CasoFormComponent implements OnInit {
     this.saving = true;
     this.successMsg = '';
     this.errorMsg = '';
-    const formData = this.form.value;
+    const formData = {
+      ...this.form.value,
+      id_colegio: 1,  // Liceo Ejemplo Santiago
+      estado: 'abierto',
+    };
+
+    // Remove involucrados from the main insert (it's a separate table)
+    const { involucrados, ...casoData } = formData;
 
     const request = this.isEdit
-      ? this.supabase.updateCaso(this.casoId!, formData)
-      : this.supabase.createCaso(formData);
+      ? this.supabase.updateCaso(this.casoId!, casoData)
+      : this.supabase.createCaso(casoData);
 
     request.subscribe({
       next: (caso: any) => {

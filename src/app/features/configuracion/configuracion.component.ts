@@ -17,6 +17,10 @@ export class ConfiguracionComponent implements OnInit {
   private auth = inject(AuthService);
   private fb = inject(FormBuilder);
 
+  // Role mapping: DB rol_id (number) <-> display name (string)
+  private rolMap: Record<number, string> = { 1: 'admin', 2: 'encargado_convivencia', 3: 'estudiante' };
+  private rolNameToId: Record<string, number> = { admin: 1, encargado_convivencia: 2, estudiante: 3 };
+
   activeTab: 'perfil' | 'colegio' | 'usuarios' | 'preferencias' = 'perfil';
 
   currentUser: Usuario | null = null;
@@ -146,7 +150,10 @@ export class ConfiguracionComponent implements OnInit {
   loadUsuarios(): void {
     this.usuariosLoading = true;
     this.supabase.getUsuarios(1, 100).subscribe((res) => {
-      this.usuarios = res.data;
+      this.usuarios = res.data.map(u => ({
+        ...u,
+        rol: this.rolMap[u.rol_id] ?? u.rol ?? 'sin_rol',
+      }));
       this.usuariosLoading = false;
     });
   }
@@ -193,7 +200,7 @@ export class ConfiguracionComponent implements OnInit {
     const data = this.userForm.value;
 
     if (this.isEditUser && this.selectedUser?.id) {
-      const updateData: any = { nombre: data.nombre, correo: data.correo, rol: data.rol };
+      const updateData: any = { nombre: data.nombre, correo: data.correo, rol_id: this.rolNameToId[data.rol] ?? 2 };
       this.supabase.updateUsuarioRx(this.selectedUser.id, updateData).subscribe({
         next: () => {
           this.userSaving = false;
@@ -207,7 +214,7 @@ export class ConfiguracionComponent implements OnInit {
         },
       });
     } else {
-      this.supabase.createUsuarioRx({ correo: data.correo, nombre: data.nombre, rol: data.rol, password: data.password }).subscribe({
+      this.supabase.createUsuarioRx({ correo: data.correo, nombre: data.nombre, rol_id: this.rolNameToId[data.rol] ?? 2, password: data.password }).subscribe({
         next: () => {
           this.userSaving = false;
           this.userSuccess = 'Usuario creado exitosamente';

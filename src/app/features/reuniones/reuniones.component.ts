@@ -39,8 +39,8 @@ export class ReunionesComponent implements OnInit {
       apoderado: ['', Validators.required],
       motivo: ['', Validators.required],
       acuerdos: [''],
-      observacion: [''],
-      caso_id: [null],
+      observaciones: [''],
+      id_caso: [null],
     });
   }
 
@@ -70,7 +70,7 @@ export class ReunionesComponent implements OnInit {
   openCreate(): void {
     this.isEdit = false;
     this.selectedReunion = undefined;
-    this.form.reset({ fecha: new Date().toISOString().split('T')[0], acuerdos: '', observacion: '', caso_id: null });
+    this.form.reset({ fecha: new Date().toISOString().split('T')[0], acuerdos: '', observaciones: '', id_caso: null });
     this.showModal = true;
     this.successMsg = '';
     this.errorMsg = '';
@@ -82,11 +82,11 @@ export class ReunionesComponent implements OnInit {
     this.selectedReunion = rep;
     this.form.patchValue({
       fecha: rep.fecha ? rep.fecha.substring(0, 10) : '',
-      apoderado: rep.apoderado,
+      apoderado: rep.apoderado || '',
       motivo: rep.motivo,
       acuerdos: rep.acuerdos,
-      observacion: rep.observacion,
-      caso_id: rep.caso_id,
+      observaciones: rep.observaciones,
+      id_caso: rep.id_caso,
     });
     this.showModal = true;
     this.successMsg = '';
@@ -106,11 +106,22 @@ export class ReunionesComponent implements OnInit {
     this.saving = true;
     this.successMsg = '';
     this.errorMsg = '';
-    const data = this.form.value;
+    const formData = this.form.value;
+
+    // Map form fields to DB columns
+    const dbData: any = {
+      fecha: formData.fecha,
+      motivo: formData.motivo,
+      acuerdos: formData.acuerdos || '',
+      observaciones: formData.observaciones || '',
+      id_caso: formData.id_caso || null,
+      id_colegio: 1,  // Liceo Ejemplo Santiago
+      responsable: 2,  // Encargado de Convivencia
+    };
 
     const request = this.isEdit && this.selectedReunion?.id
-      ? this.supabase.updateReunionRx(this.selectedReunion.id, data)
-      : this.supabase.createReunionRx(data);
+      ? this.supabase.updateReunionRx(this.selectedReunion.id, dbData)
+      : this.supabase.createReunionRx(dbData);
 
     request.subscribe({
       next: () => {
@@ -163,11 +174,11 @@ export class ReunionesComponent implements OnInit {
     doc.text(rep.motivo, 50, y);
     y += 8;
 
-    if (rep.caso_id) {
+    if (rep.caso_id || rep.id_caso) {
       doc.setFont('helvetica', 'bold');
       doc.text('Caso Relacionado:', 14, y);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Caso #${rep.caso_id}`, 50, y);
+      doc.text(`Caso #${rep.caso_id || rep.id_caso}`, 50, y);
       y += 8;
     }
 
@@ -183,12 +194,12 @@ export class ReunionesComponent implements OnInit {
       y += acuerdosLines.length * 5 + 6;
     }
 
-    if (rep.observacion) {
+    if (rep.observaciones) {
       doc.setFont('helvetica', 'bold');
       doc.text('Observaciones:', 14, y);
       y += 6;
       doc.setFont('helvetica', 'normal');
-      const obsLines = doc.splitTextToSize(rep.observacion, pageWidth - 28);
+      const obsLines = doc.splitTextToSize(rep.observaciones, pageWidth - 28);
       doc.text(obsLines, 14, y);
       y += obsLines.length * 5 + 6;
     }

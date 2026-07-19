@@ -61,7 +61,7 @@ export class CursosComponent implements OnInit {
     this.loading = true;
     this.supabase.getCursos({
       nivel: this.nivelFilter || undefined,
-      año: this.anioFilter || undefined,
+      anio: this.anioFilter || undefined,
       page: this.page,
       limit: this.limit,
     }).subscribe((res: any) => {
@@ -119,7 +119,7 @@ export class CursosComponent implements OnInit {
     this.saving = true;
     this.successMsg = '';
     this.errorMsg = '';
-    const data = this.form.value;
+    const data = { ...this.form.value, id_colegio: 1 };  // Liceo Ejemplo Santiago
 
     const request = this.isEdit && this.selectedCurso?.id
       ? this.supabase.updateCursoRx(this.selectedCurso.id, data)

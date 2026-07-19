@@ -46,7 +46,7 @@ export class SupabaseService {
         ],
       }));
     }
-    return from(this.getStats('').then(r => r.data));
+    return from(this.getStats().then(r => r.data));
   }
 
   getCasos(filters?: any): Observable<{ data: any[]; count: number }> {
@@ -68,7 +68,7 @@ export class SupabaseService {
     }
     return from(
       (async () => {
-        let query = this.supabase.from('casos_convivencia').select('*', { count: 'exact' });
+        let query = this.supabase.from('casos_convivencia').select('*, estudiantes(nombre, rut)', { count: 'exact' });
         if (filters?.tipo) query = query.eq('tipo_caso', filters.tipo);
         if (filters?.estado) query = query.eq('estado', filters.estado);
         const page = filters?.page ?? 1;
@@ -76,7 +76,13 @@ export class SupabaseService {
         const fromP = (page - 1) * limit;
         const toP = fromP + limit - 1;
         const { data, count } = await query.range(fromP, toP).order('fecha_registro', { ascending: false });
-        return { data: data ?? [], count: count ?? 0 };
+        // Transform nested estudiantes into flat estudiante_nombre for template compatibility
+        const transformed = (data ?? []).map((c: any) => ({
+          ...c,
+          estudiante_nombre: c.estudiantes?.nombre ?? 'Sin estudiante',
+          estudiante_rut: c.estudiantes?.rut ?? '',
+        }));
+        return { data: transformed, count: count ?? 0 };
       })()
     );
   }
@@ -85,7 +91,12 @@ export class SupabaseService {
     return from(
       (async () => {
         const { data } = await this.supabase.from('casos_convivencia').select('*, estudiantes(nombre, rut)').eq('id', id).single();
-        return data;
+        if (!data) return null;
+        return {
+          ...data,
+          estudiante_nombre: data.estudiantes?.nombre ?? 'Sin estudiante',
+          estudiante_rut: data.estudiantes?.rut ?? '',
+        };
       })()
     );
   }
@@ -104,7 +115,12 @@ export class SupabaseService {
 
   getSeguimientosByCaso(casoId: number): Observable<any[]> {
     return from(
-      this.supabase.from('seguimientos').select('*').eq('id_caso', casoId).order('fecha', { ascending: false }).then(r => r.data ?? [])
+      this.supabase.from('seguimientos').select('*, usuarios(nombre)').eq('id_caso', casoId).order('fecha', { ascending: false }).then(r =>
+        (r.data ?? []).map((s: any) => ({
+          ...s,
+          responsable_nombre: s.usuarios?.nombre ?? '—',
+        }))
+      )
     );
   }
 
@@ -123,13 +139,17 @@ export class SupabaseService {
     }
     return from(
       (async () => {
-        let query = this.supabase.from('seguimientos').select('*', { count: 'exact' });
+        let query = this.supabase.from('seguimientos').select('*, usuarios(nombre)', { count: 'exact' });
         const page = filters?.page ?? 1;
         const limit = filters?.limit ?? 10;
         const fromP = (page - 1) * limit;
         const toP = fromP + limit - 1;
         const { data, count } = await query.range(fromP, toP).order('fecha', { ascending: false });
-        return { data: data ?? [], count: count ?? 0 };
+        const transformed = (data ?? []).map((s: any) => ({
+          ...s,
+          responsable_nombre: s.usuarios?.nombre ?? '—',
+        }));
+        return { data: transformed, count: count ?? 0 };
       })()
     );
   }
@@ -240,8 +260,14 @@ export class SupabaseService {
       (async () => {
         const fromP = (page - 1) * limit;
         const toP = fromP + limit - 1;
-        const { data, count } = await this.supabase.from('reuniones_apoderados').select('*', { count: 'exact' }).range(fromP, toP).order('fecha', { ascending: false });
-        return { data: data ?? [], count: count ?? 0 };
+        const { data, count } = await this.supabase.from('reuniones_apoderados').select('*, casos_convivencia(id_estudiante, estudiantes(nombre))', { count: 'exact' }).range(fromP, toP).order('fecha', { ascending: false });
+        const transformed = (data ?? []).map((r: any) => ({
+          ...r,
+          caso_id: r.id_caso,
+          estudiante_nombre: r.casos_convivencia?.estudiantes?.nombre ?? '',
+          apoderado: r.apoderado_texto ?? r.motivo?.substring(0, 30) ?? '—',
+        }));
+        return { data: transformed, count: count ?? 0 };
       })()
     );
   }
@@ -259,12 +285,6 @@ export class SupabaseService {
   }
 
   getReunionesByCaso(casoId: number): Observable<any[]> {
-    if (this.isDemo) {
-      const demo = [
-        { id: 1, id_caso: casoId, apoderado_nombre: 'Sra. González', fecha: '2026-06-27', motivo: 'Seguimiento de caso', acuerdos: 'Compromiso de respeto', observaciones: 'Buena disposición', responsable: 1 },
-      ];
-      return from(Promise.resolve(demo));
-    }
     return from(
       this.supabase.from('reuniones_apoderados')
         .select('*')
@@ -275,15 +295,78 @@ export class SupabaseService {
   }
 
   getCasosPorCurso(): Observable<any[]> {
-    return from(Promise.resolve([]));
+    return from(
+      (async () => {
+        const { data: casos } = await this.supabase.from('casos_convivencia').select('id_estudiante');
+        const { data: matriculas } = await this.supabase.from('matriculas').select('id_estudiante, id_curso');
+        const { data: cursosData } = await this.supabase.from('cursos').select('id, nivel, letra');
+        if (!casos || !matriculas || !cursosData) return [];
+        
+        // Map estudiante -> curso name
+        const estToCurso: Record<number, string> = {};
+        for (const m of matriculas) {
+          const curso = cursosData.find((c: any) => c.id === m.id_curso);
+          if (curso) estToCurso[m.id_estudiante] = `${curso.nivel} ${curso.letra}`;
+        }
+        // Count cases per curso
+        const cursoCount: Record<string, number> = {};
+        for (const c of casos) {
+          const nombre = estToCurso[c.id_estudiante] ?? 'Sin curso';
+          cursoCount[nombre] = (cursoCount[nombre] || 0) + 1;
+        }
+        return Object.entries(cursoCount).map(([curso, total]) => ({ curso, total }));
+      })()
+    );
   }
 
   getTendenciasMensuales(): Observable<any[]> {
-    return from(Promise.resolve([]));
+    return from(
+      (async () => {
+        const { data: casos } = await this.supabase.from('casos_convivencia')
+          .select('fecha_registro')
+          .order('fecha_registro', { ascending: true });
+        if (!casos) return [];
+        // Group by month
+        const monthCount: Record<string, number> = {};
+        for (const c of casos) {
+          const d = new Date(c.fecha_registro);
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          monthCount[key] = (monthCount[key] || 0) + 1;
+        }
+        return Object.entries(monthCount).map(([mes, total]) => ({ mes, total }));
+      })()
+    );
   }
 
   getAlertas(): Observable<any[]> {
-    return from(Promise.resolve([]));
+    return from(
+      (async () => {
+        const alertas: any[] = [];
+        // Count urgent cases
+        const { count: urgentes } = await this.supabase.from('casos_convivencia')
+          .select('*', { count: 'exact', head: true })
+          .eq('prioridad', 'urgente')
+          .eq('estado', 'abierto');
+        if (urgentes && urgentes > 0) {
+          alertas.push({ tipo: 'danger', titulo: 'Casos Urgentes', mensaje: `${urgentes} casos urgentes abiertos requieren atención inmediata` });
+        }
+        // Count open cases
+        const { count: abiertos } = await this.supabase.from('casos_convivencia')
+          .select('*', { count: 'exact', head: true })
+          .eq('estado', 'abierto');
+        if (abiertos && abiertos > 5) {
+          alertas.push({ tipo: 'warning', titulo: 'Casos Abiertos', mensaje: `${abiertos} casos abiertos pendientes de revisión` });
+        }
+        // Count seguimiento
+        const { count: seguimiento } = await this.supabase.from('casos_convivencia')
+          .select('*', { count: 'exact', head: true })
+          .eq('estado', 'en_seguimiento');
+        if (seguimiento) {
+          alertas.push({ tipo: 'info', titulo: 'En Seguimiento', mensaje: `${seguimiento} casos en seguimiento activo` });
+        }
+        return alertas;
+      })()
+    );
   }
 
   getUsuarios(page = 1, limit = 20): Observable<{ data: any[]; count: number }> {
@@ -716,19 +799,36 @@ export class SupabaseService {
   }
 
   // Dashboard (legacy)
-  async getStats(idColegio: string): Promise<SupabaseApiResponse<DashboardStats>> {
+  async getStats(idColegio?: string): Promise<SupabaseApiResponse<DashboardStats>> {
     try {
-      const { count: totalCasos } = await this.supabase.from('casos_convivencia').select('*', { count: 'exact', head: true }).eq('id_colegio', idColegio);
-      const { count: abiertos } = await this.supabase.from('casos_convivencia').select('*', { count: 'exact', head: true }).eq('id_colegio', idColegio).eq('estado', 'abierto');
-      const { count: enSeguimiento } = await this.supabase.from('casos_convivencia').select('*', { count: 'exact', head: true }).eq('id_colegio', idColegio).eq('estado', 'en_seguimiento');
-      const { count: cerrados } = await this.supabase.from('casos_convivencia').select('*', { count: 'exact', head: true }).eq('id_colegio', idColegio).eq('estado', 'cerrado');
+      let baseQuery = this.supabase.from('casos_convivencia').select('*', { count: 'exact', head: true });
+      if (idColegio) baseQuery = baseQuery.eq('id_colegio', idColegio);
+      const { count: totalCasos } = await baseQuery;
+
+      let abiertosQuery = this.supabase.from('casos_convivencia').select('*', { count: 'exact', head: true }).eq('estado', 'abierto');
+      if (idColegio) abiertosQuery = abiertosQuery.eq('id_colegio', idColegio);
+      const { count: abiertos } = await abiertosQuery;
+
+      let enSegQuery = this.supabase.from('casos_convivencia').select('*', { count: 'exact', head: true }).eq('estado', 'en_seguimiento');
+      if (idColegio) enSegQuery = enSegQuery.eq('id_colegio', idColegio);
+      const { count: enSeguimiento } = await enSegQuery;
+
+      let cerradosQuery = this.supabase.from('casos_convivencia').select('*', { count: 'exact', head: true }).eq('estado', 'cerrado');
+      if (idColegio) cerradosQuery = cerradosQuery.eq('id_colegio', idColegio);
+      const { count: cerrados } = await cerradosQuery;
+
+      // Count reuniones
+      let reunionesQuery = this.supabase.from('reuniones_apoderados').select('*', { count: 'exact', head: true });
+      if (idColegio) reunionesQuery = reunionesQuery.eq('id_colegio', idColegio);
+      const { count: reunionesRealizadas } = await reunionesQuery;
+
       const alertas: string[] = [];
       if (abiertos && abiertos > 5) alertas.push(`Hay ${abiertos} casos abiertos que requieren atención.`);
       return {
         data: {
           totalCasos: totalCasos ?? 0, abiertos: abiertos ?? 0,
           enSeguimiento: enSeguimiento ?? 0, cerrados: cerrados ?? 0,
-          reunionesRealizadas: 0, casosPorCurso: [], alertas,
+          reunionesRealizadas: reunionesRealizadas ?? 0, casosPorCurso: [], alertas,
         }, error: null,
       };
     } catch (err) {

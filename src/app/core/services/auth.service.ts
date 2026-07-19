@@ -19,8 +19,17 @@ export class AuthService {
   private isAuthenticatedSignal = signal(false);
   readonly isAuth = this.isAuthenticatedSignal.asReadonly();
 
+  private rolMap: Record<number, string> = { 1: 'admin', 2: 'encargado_convivencia', 3: 'estudiante' };
+
   constructor() {
     this.restoreSession();
+  }
+
+  private mapRol(usuario: any): Usuario {
+    return {
+      ...usuario,
+      rol: usuario.rol || this.rolMap[usuario.rol_id] || 'encargado_convivencia',
+    };
   }
 
   private async restoreSession(): Promise<void> {
@@ -34,8 +43,9 @@ export class AuthService {
 
     const { data: usuario } = await this.supabase.getUsuarioByAuthId(session.user.id);
     if (usuario) {
-      this.currentUserSubject.next(usuario);
-      this.currentUserSignal.set(usuario);
+      const mapped = this.mapRol(usuario);
+      this.currentUserSubject.next(mapped);
+      this.currentUserSignal.set(mapped);
       this.isAuthenticatedSignal.set(true);
     } else {
       // Fallback: crear usuario temporal si existe sesión pero no hay registro en BD
@@ -99,11 +109,12 @@ export class AuthService {
       return { user: null, error: 'Tu cuenta está desactivada. Contacta al administrador.' };
     }
 
-    this.currentUserSubject.next(usuario);
-    this.currentUserSignal.set(usuario);
+    const mapped = this.mapRol(usuario);
+    this.currentUserSubject.next(mapped);
+    this.currentUserSignal.set(mapped);
     this.isAuthenticatedSignal.set(true);
 
-    return { user: usuario, error: null };
+    return { user: mapped, error: null };
   }
 
   async logout(): Promise<void> {

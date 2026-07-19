@@ -29,7 +29,7 @@ export const routes: Routes = [
         title: 'Nuevo Caso — Nexora',
       },
       {
-        path: 'casos/editar/:id',
+        path: 'casos/:id/editar',
         loadComponent: () => import('./features/casos/caso-form.component').then(m => m.CasoFormComponent),
         title: 'Editar Caso — Nexora',
       },

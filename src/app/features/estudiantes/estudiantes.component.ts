@@ -108,7 +108,7 @@ export class EstudiantesComponent implements OnInit {
     this.errorMsg = '';
     const data = this.form.value;
 
-    const payload = { ...data };
+    const payload = { ...data, id_colegio: 1 };  // Liceo Ejemplo Santiago
 
     const request = this.isEdit && this.selectedEst?.id
       ? this.supabase.updateEstudianteRx(this.selectedEst.id, payload)

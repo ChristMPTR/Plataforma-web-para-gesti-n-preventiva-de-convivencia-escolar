@@ -80,11 +80,11 @@ export class CasoDetailComponent implements OnInit {
   }
 
   editar(): void {
-    this.router.navigate(['/casos/editar', this.caso?.id]);
+    this.router.navigate(['/casos', this.caso?.id, 'editar']);
   }
 
   prioridadClass(p: string): string {
-    const map: Record<string, string> = { baja: 'badge-success', media: 'badge-warning', alta: 'badge-danger', critica: 'badge-dark' };
+    const map: Record<string, string> = { baja: 'badge-success', media: 'badge-warning', alta: 'badge-danger', urgente: 'badge-dark', critica: 'badge-dark' };
     return map[p] ?? '';
   }
 
