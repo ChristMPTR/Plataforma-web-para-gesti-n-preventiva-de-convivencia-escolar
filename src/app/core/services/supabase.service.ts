@@ -326,9 +326,22 @@ export class SupabaseService {
 
   async signIn(email: string, password: string) {
     try {
+      // Intentar login normal
       const { data, error } = await this.supabase.auth.signInWithPassword({ email, password });
-      if (error) return { user: null, error: error.message };
-      return { user: data.user, error: null };
+      if (!error && data.user) return { user: data.user, error: null };
+
+      // Si falla porque el usuario no existe, crearlo automaticamente
+      if (error && error.message.includes('Invalid login')) {
+        const { data: signUpData, error: signUpError } = await this.supabase.auth.signUp({ email, password });
+        if (signUpError) return { user: null, error: signUpError.message };
+
+        // Ahora si login con la cuenta recien creada
+        const { data: loginData, error: loginError } = await this.supabase.auth.signInWithPassword({ email, password });
+        if (loginError) return { user: null, error: loginError.message };
+        return { user: loginData.user, error: null };
+      }
+
+      return { user: null, error: error?.message || 'Error de autenticacion' };
     } catch (err) {
       return { user: null, error: this.handleError(err) };
     }
