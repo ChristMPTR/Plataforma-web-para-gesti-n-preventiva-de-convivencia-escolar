@@ -21,8 +21,15 @@ export class AuthService {
 
   private rolMap: Record<number, string> = { 1: 'admin', 2: 'encargado_convivencia', 3: 'estudiante' };
 
+  private sessionReady: Promise<void>;
+
   constructor() {
-    this.restoreSession();
+    this.sessionReady = this.restoreSession();
+  }
+
+  /** Called by APP_INITIALIZER to block routing until session is resolved */
+  waitForSession(): Promise<void> {
+    return this.sessionReady;
   }
 
   private mapRol(usuario: any): Usuario {
