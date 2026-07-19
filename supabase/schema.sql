@@ -232,3 +232,54 @@ INSERT INTO roles (nombre, permisos) VALUES
   ('admin', '["all"]'),
   ('encargado_convivencia', '["casos:full", "seguimientos:full", "reuniones:full", "estudiantes:read", "dashboard:full", "reportes:full"]'),
   ('estudiante', '["solicitudes:own", "recursos:read"]');
+
+-- Colegio de prueba
+INSERT INTO colegios (nombre, direccion, estado) VALUES
+  ('Liceo Ejemplo Santiago', 'Av. Libertador 1234, Santiago', 'activo');
+
+-- Usuarios de prueba (admin y encargado)
+INSERT INTO usuarios (nombre, correo, rol_id, id_colegio, estado) VALUES
+  ('Administrador Nexora', 'admin@nexora.cl', 1, 1, 'activo'),
+  ('Encargado de Convivencia', 'encargado@nexora.cl', 2, 1, 'activo');
+
+-- Cursos de prueba
+INSERT INTO cursos (nivel, letra, anio, id_colegio) VALUES
+  ('1Basico', 'A', 2026, 1),
+  ('1Basico', 'B', 2026, 1),
+  ('2Basico', 'A', 2026, 1),
+  ('8Basico', 'A', 2026, 1),
+  ('1Medio', 'A', 2026, 1),
+  ('2Medio', 'B', 2026, 1);
+
+-- Estudiantes de prueba
+INSERT INTO estudiantes (nombre, rut, fecha_nacimiento, id_colegio) VALUES
+  ('Pedro Gonzalez', '12345678-9', '2012-03-15', 1),
+  ('Maria Lopez', '12345678-0', '2012-07-22', 1),
+  ('Juan Perez', '12345678-1', '2010-01-10', 1),
+  ('Ana Ramirez', '12345678-2', '2010-05-30', 1),
+  ('Carlos Silva', '12345678-3', '2013-09-18', 1),
+  ('Laura Martinez', '12345678-4', '2013-11-25', 1);
+
+-- Matriculas
+INSERT INTO matriculas (id_estudiante, id_curso, anio_escolar) VALUES
+  (1, 1, 2026), (2, 1, 2026), (3, 4, 2026),
+  (4, 5, 2026), (5, 3, 2026), (6, 6, 2026);
+
+-- Casos de prueba
+INSERT INTO casos_convivencia (id_estudiante, tipo_caso, descripcion, prioridad, estado, id_colegio, creado_por) VALUES
+  (1, 'conflicto_entre_estudiantes', 'Conflicto verbal en el recreation con otro estudiante del curso 1Basico A', 'media', 'abierto', 1, 2),
+  (3, 'conducta', 'Comportamiento reiterado de irrespeto hacia profesores durante clases de matematicas', 'alta', 'en_seguimiento', 1, 2),
+  (4, 'convivencia', 'Situacion de aislamiento social recurrente, la estudiante no se relaciona con sus compañeras', 'media', 'en_seguimiento', 1, 2),
+  (5, 'acoso', 'Situacion de acoso entre pares detectada por profesor guia, requiere investigacion inmediata', 'urgente', 'abierto', 1, 2);
+
+-- Seguimientos de prueba
+INSERT INTO seguimientos (id_caso, accion_realizada, observacion, responsable) VALUES
+  (1, 'Reunion con apoderados de ambas partes', 'Se converso con los padres de Pedro y del otro involucrado. Ambos mostraron disposicion a resolver el conflicto.', 2),
+  (1, 'Mediacion entre estudiantes', 'Se realizo sesion de mediacion con orientadora. Los estudiantes llegaron a un acuerdo verbal.', 2),
+  (2, 'Notificacion a apoderado por escrito', 'Se envio carta al padre de Juan informando la situacion y solicitando reunion.', 2),
+  (3, 'Evaluacion psicologica inicial', 'Se coordino entrevista con psicologa del liceo para evaluar la situacion de Maria.', 2);
+
+-- Reuniones de prueba
+INSERT INTO reuniones_apoderados (id_caso, fecha, motivo, acuerdos, observaciones, responsable, id_colegio) VALUES
+  (1, '2026-06-25', 'Reunion inicial por conflicto entre Pedro y companero', 'Ambos apoderados se comprometen a reforzar valores de respeto en casa. Proxima revision en 2 semanas.', 'Buena disposicion de ambas partes', 2, 1),
+  (2, '2026-06-27', 'Seguimiento de caso de conducta de Juan', 'Se establece plan de acompanamiento semanal con profesor guia y orientadora.', 'El padre acepta participar activamente', 2, 1);
