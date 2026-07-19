@@ -1,7 +1,7 @@
 {
   "framework": "angular",
   "buildCommand": "ng build",
-  "outputDirectory": "dist/nexora",
+  "outputDirectory": "dist/nexora/browser",
   "installCommand": "npm install",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
