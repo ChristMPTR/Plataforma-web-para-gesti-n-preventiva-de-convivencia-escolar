@@ -43,10 +43,13 @@ export class AuthService {
   async login(email: string, password: string): Promise<{ user: Usuario | null; error: string | null }> {
     // Demo mode: allow login without Supabase
     if (environment.supabaseUrl === 'https://tu-proyecto.supabase.co') {
+      const isAdmin = email.toLowerCase().includes('admin');
       const demoUser: Usuario = {
-        id: 1, nombre: 'Carlos Mendoza', correo: email,
+        id: isAdmin ? 1 : 2,
+        nombre: isAdmin ? 'Administrador Nexora' : 'Encargado de Convivencia',
+        correo: email,
         id_colegio: 1, estado: 'activo', created_at: new Date().toISOString(),
-        rol: 'encargado_convivencia',
+        rol: isAdmin ? 'admin' : 'encargado_convivencia',
       };
       this.currentUserSubject.next(demoUser);
       this.currentUserSignal.set(demoUser);
