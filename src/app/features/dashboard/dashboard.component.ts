@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, inject, PLATFORM_ID, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, inject, PLATFORM_ID, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -10,7 +10,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
-export class DashboardComponent implements OnInit, AfterViewInit {
+export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private supabase = inject(SupabaseService);
   private platformId = inject(PLATFORM_ID);
   @ViewChild('barChart') barChartCanvas!: ElementRef<HTMLCanvasElement>;
@@ -25,6 +25,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   today = new Date();
 
   private chartJs: any;
+  private loadingTimeout: any = null;
 
   ngOnInit(): void {
     this.loadData();
@@ -41,35 +42,79 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private loadData(): void {
-    this.supabase.getDashboardStats().subscribe((stats: any) => {
-      if (stats) {
-        this.stats = {
-          total_casos: stats.totalCasos ?? 0,
-          casos_abiertos: (stats.abiertos ?? 0) + (stats.enSeguimiento ?? 0),
-          casos_cerrados: stats.cerrados ?? 0,
-          reuniones_realizadas: stats.reunionesRealizadas ?? 0,
-        };
+  ngOnDestroy(): void {
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+    }
+  }
+
+  /** Safety net: if loading never resolves, force it off after 10s */
+  private startLoadingFallback(): void {
+    this.loadingTimeout = setTimeout(() => {
+      if (this.loading) {
+        console.warn('[Dashboard] Loading timeout — forcing loading=false');
+        this.loading = false;
       }
-      this.loading = false;
+    }, 10000);
+  }
+
+  private loadData(): void {
+    this.startLoadingFallback();
+
+    this.supabase.getDashboardStats().subscribe({
+      next: (stats: any) => {
+        if (stats) {
+          this.stats = {
+            total_casos: stats.totalCasos ?? 0,
+            casos_abiertos: (stats.abiertos ?? 0) + (stats.enSeguimiento ?? 0),
+            casos_cerrados: stats.cerrados ?? 0,
+            reuniones_realizadas: stats.reunionesRealizadas ?? 0,
+          };
+        }
+        this.loading = false;
+        if (this.loadingTimeout) {
+          clearTimeout(this.loadingTimeout);
+          this.loadingTimeout = null;
+        }
+      },
+      error: (err) => {
+        console.error('[Dashboard] Error loading stats:', err);
+        this.loading = false;
+        if (this.loadingTimeout) {
+          clearTimeout(this.loadingTimeout);
+          this.loadingTimeout = null;
+        }
+      },
     });
 
-    this.supabase.getCasos({ page: 1, limit: 5 }).subscribe((res: any) => {
-      this.casosRecientes = res.data ?? [];
+    this.supabase.getCasos({ page: 1, limit: 5 }).subscribe({
+      next: (res: any) => {
+        this.casosRecientes = res.data ?? [];
+      },
+      error: (err) => console.error('[Dashboard] Error loading casos recientes:', err),
     });
 
-    this.supabase.getCasosPorCurso().subscribe((data) => {
-      this.casosPorCurso = data ?? [];
-      this.renderBarChart();
+    this.supabase.getCasosPorCurso().subscribe({
+      next: (data) => {
+        this.casosPorCurso = data ?? [];
+        this.renderBarChart();
+      },
+      error: (err) => console.error('[Dashboard] Error loading casos por curso:', err),
     });
 
-    this.supabase.getTendenciasMensuales().subscribe((data) => {
-      this.tendencias = data ?? [];
-      this.renderLineChart();
+    this.supabase.getTendenciasMensuales().subscribe({
+      next: (data) => {
+        this.tendencias = data ?? [];
+        this.renderLineChart();
+      },
+      error: (err) => console.error('[Dashboard] Error loading tendencias:', err),
     });
 
-    this.supabase.getAlertas().subscribe((data) => {
-      this.alertas = data ?? [];
+    this.supabase.getAlertas().subscribe({
+      next: (data) => {
+        this.alertas = data ?? [];
+      },
+      error: (err) => console.error('[Dashboard] Error loading alertas:', err),
     });
   }
 
