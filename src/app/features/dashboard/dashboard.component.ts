@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, inject, PLATFORM_ID, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, AfterViewChecked, OnDestroy, inject, PLATFORM_ID, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -10,9 +10,10 @@ import { SupabaseService } from '../../core/services/supabase.service';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
-export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
+export class DashboardComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
   private supabase = inject(SupabaseService);
   private platformId = inject(PLATFORM_ID);
+  private cdr = inject(ChangeDetectorRef);
   @ViewChild('barChart') barChartCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('lineChart') lineChartCanvas!: ElementRef<HTMLCanvasElement>;
 
@@ -25,7 +26,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   today = new Date();
 
   private chartJs: any;
+  private barChart: any = null;
+  private lineChart: any = null;
   private loadingTimeout: any = null;
+  private viewCheckedOnce = false;
 
   ngOnInit(): void {
     this.loadData();
@@ -35,10 +39,17 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (isPlatformBrowser(this.platformId)) {
       import('chart.js').then((m) => {
         this.chartJs = m;
-        // Chart.js loaded AFTER data may have arrived — retry renders
-        if (this.casosPorCurso.length) this.renderBarChart();
-        if (this.tendencias.length) this.renderLineChart();
+        this.tryRenderCharts();
       });
+    }
+  }
+
+  ngAfterViewChecked(): void {
+    // After loading=false, Angular needs at least one change detection cycle
+    // to render *ngIf content and resolve @ViewChild. This catches that moment.
+    if (!this.loading && this.chartJs && !this.viewCheckedOnce) {
+      this.viewCheckedOnce = true;
+      this.tryRenderCharts();
     }
   }
 
@@ -46,6 +57,25 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.loadingTimeout) {
       clearTimeout(this.loadingTimeout);
     }
+    this.destroyCharts();
+  }
+
+  /** Destroy existing chart instances to prevent "Canvas already in use" errors */
+  private destroyCharts(): void {
+    if (this.barChart) {
+      this.barChart.destroy();
+      this.barChart = null;
+    }
+    if (this.lineChart) {
+      this.lineChart.destroy();
+      this.lineChart = null;
+    }
+  }
+
+  /** Try to render both charts — safe to call multiple times (destroys before recreating) */
+  private tryRenderCharts(): void {
+    if (this.casosPorCurso.length) this.renderBarChart();
+    if (this.tendencias.length) this.renderLineChart();
   }
 
   /** Safety net: if loading never resolves, force it off after 10s */
@@ -76,11 +106,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           clearTimeout(this.loadingTimeout);
           this.loadingTimeout = null;
         }
-        // Re-attempt chart renders after Angular updates the DOM
-        setTimeout(() => {
-          if (this.casosPorCurso.length) this.renderBarChart();
-          if (this.tendencias.length) this.renderLineChart();
-        }, 0);
+        // Force Angular to update the DOM (resolve *ngIf, then @ViewChild)
+        this.cdr.detectChanges();
+        // Re-attempt chart renders after DOM update
+        setTimeout(() => this.tryRenderCharts(), 100);
       },
       error: (err) => {
         console.error('[Dashboard] Error loading stats:', err);
@@ -128,6 +157,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const ctx = this.barChartCanvas.nativeElement.getContext('2d');
     if (!ctx) return;
 
+    // Destroy previous instance to avoid "Canvas already in use"
+    if (this.barChart) {
+      this.barChart.destroy();
+      this.barChart = null;
+    }
+
     const chartColors = [
       '#2e86c1', '#27ae60', '#f39c12', '#e74c3c',
       '#8e44ad', '#16a085', '#d35400', '#2c3e50',
@@ -156,7 +191,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       },
     };
 
-    new this.chartJs.Chart(ctx, {
+    this.barChart = new this.chartJs.Chart(ctx, {
       type: 'bar',
       data: {
         labels,
@@ -219,6 +254,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const ctx = this.lineChartCanvas.nativeElement.getContext('2d');
     if (!ctx) return;
 
+    // Destroy previous instance to avoid "Canvas already in use"
+    if (this.lineChart) {
+      this.lineChart.destroy();
+      this.lineChart = null;
+    }
+
     const labels = this.tendencias.map((t: any) => {
       const [y, m] = (t.mes ?? t.fecha ?? '').split('-');
       const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -251,7 +292,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       },
     };
 
-    new this.chartJs.Chart(ctx, {
+    this.lineChart = new this.chartJs.Chart(ctx, {
       type: 'line',
       data: {
         labels,
