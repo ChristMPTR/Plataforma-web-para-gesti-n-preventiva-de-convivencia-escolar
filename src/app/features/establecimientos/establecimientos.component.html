@@ -1,0 +1,87 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Establecimientos</h1>
+      <p class="subtitle">{{ colegios.length }} establecimientos registrados</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <span class="material-symbols-outlined">add</span> Nuevo Establecimiento
+    </button>
+  </header>
+
+  <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
+  <div class="alert alert-error" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="loading-shimmer" *ngIf="loading">
+    <div class="shimmer-row" *ngFor="let _ of [1,2,3]"><div class="shimmer-line"></div></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div class="table-card" *ngIf="colegios.length; else emptyState">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr><th>Nombre</th><th>Dirección</th><th>Estado</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of colegios">
+              <td><strong>{{ c.nombre }}</strong></td>
+              <td>{{ c.direccion || '—' }}</td>
+              <td><span class="badge" [class]="getEstadoClass(c.estado)">{{ c.estado }}</span></td>
+              <td class="acciones">
+                <button class="btn-icon" title="Editar" (click)="openEdit(c)"><span class="material-symbols-outlined">edit</span></button>
+                <button class="btn-icon btn-danger" title="Eliminar" (click)="eliminar(c)"><span class="material-symbols-outlined">delete</span></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <span class="material-symbols-outlined">business</span>
+        <h3>No hay establecimientos</h3>
+        <p>Crea el primer establecimiento para comenzar.</p>
+        <button class="btn btn-primary" (click)="openCreate()">Crear Establecimiento</button>
+      </div>
+    </ng-template>
+  </ng-container>
+
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEdit ? 'Editar' : 'Nuevo' }} Establecimiento</h2>
+        <button class="btn-icon" (click)="closeModal()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+
+      <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
+      <div class="alert alert-error" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label>Nombre *</label>
+          <input type="text" formControlName="nombre" class="form-control" placeholder="Ej: Liceo Ejemplo" />
+          <div class="field-error" *ngIf="form.get('nombre')?.invalid && form.get('nombre')?.touched">Requerido</div>
+        </div>
+        <div class="form-group">
+          <label>Dirección</label>
+          <input type="text" formControlName="direccion" class="form-control" placeholder="Dirección opcional" />
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select formControlName="estado" class="form-control">
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving">
+            {{ saving ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

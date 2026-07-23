@@ -58,6 +58,90 @@
       </div>
     </div>
 
+    <!-- Involucrados -->
+    <div class="card">
+      <h3>Involucrados</h3>
+      <div class="inv-grid" *ngIf="involucrados.length; else noInvolucrados">
+        <div class="inv-chip" *ngFor="let inv of involucrados">
+          <span class="inv-tipo">{{ inv.tipo }}</span>
+          <span>{{ inv.estudiante_nombre || inv.nombre_externo || '—' }}</span>
+          <button class="btn-icon-sm" (click)="eliminarInvolucrado(inv)" title="Eliminar">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
+      <ng-template #noInvolucrados>
+        <p class="empty-text">Sin involucrados registrados</p>
+      </ng-template>
+
+      <!-- Formulario agregar involucrado -->
+      <div class="inv-form">
+        <div class="inv-form-row">
+          <select [(ngModel)]="involucradoForm.tipo" class="form-control-sm">
+            <option value="afectado">Afectado</option>
+            <option value="involucrado">Involucrado</option>
+            <option value="funcionario">Funcionario</option>
+            <option value="apoderado">Apoderado</option>
+          </select>
+          <button class="btn-icon-sm toggle-btn" (click)="toggleInvolucradoExterno()" title="Cambiar entre estudiante y externo">
+            <span class="material-symbols-outlined">{{ isInvolucradoExterno ? 'person' : 'badge' }}</span>
+          </button>
+        </div>
+        <div class="inv-form-row" *ngIf="!isInvolucradoExterno">
+          <select [(ngModel)]="involucradoForm.id_estudiante" class="form-control-sm">
+            <option value="">Seleccionar estudiante...</option>
+            <option *ngFor="let e of estudiantesList" [value]="e.id">{{ e.nombre }}</option>
+          </select>
+          <button class="btn btn-sm btn-primary" (click)="agregarInvolucrado()">Agregar</button>
+        </div>
+        <div class="inv-form-row" *ngIf="isInvolucradoExterno">
+          <input type="text" [(ngModel)]="involucradoForm.nombre_externo" class="form-control-sm" placeholder="Nombre completo..." />
+          <button class="btn btn-sm btn-primary" (click)="agregarInvolucrado()">Agregar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Evidencias Digitales -->
+    <div class="card">
+      <h3>Evidencias Digitales</h3>
+
+      <!-- Upload form -->
+      <div class="evidencia-upload">
+        <div class="upload-row">
+          <input type="file" (change)="onFileSelected($event)" class="file-input" accept="image/*,.pdf,.doc,.docx" />
+          <input type="text" [(ngModel)]="evidenciaDescripcion" class="form-control-sm" placeholder="Descripción de la evidencia..." />
+          <button class="btn btn-sm btn-primary" (click)="subirEvidencia()" [disabled]="!evidenciaFile || uploadingEvidencia">
+            {{ uploadingEvidencia ? 'Subiendo...' : 'Subir' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Lista de evidencias -->
+      <div *ngIf="evidencias.length; else noEvidencias">
+        <div class="evidencia-item" *ngFor="let ev of evidencias">
+          <div class="evidencia-info">
+            <span class="material-symbols-outlined evidencia-icon">{{ ev.tipo_archivo?.includes('image') ? 'image' : ev.tipo_archivo?.includes('pdf') ? 'picture_as_pdf' : 'description' }}</span>
+            <div>
+              <strong>{{ ev.nombre_archivo }}</strong>
+              <p *ngIf="ev.descripcion">{{ ev.descripcion }}</p>
+              <span class="evidencia-date">{{ ev.fecha_subida | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          </div>
+          <div class="evidencia-actions">
+            <a *ngIf="ev.url_archivo" [href]="ev.url_archivo" target="_blank" class="btn-icon-sm" title="Ver">
+              <span class="material-symbols-outlined">open_in_new</span>
+            </a>
+            <button class="btn-icon-sm btn-danger" (click)="eliminarEvidencia(ev)" title="Eliminar">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <ng-template #noEvidencias>
+        <p class="empty-text">Sin evidencias registradas</p>
+      </ng-template>
+    </div>
+
     <div class="card">
       <h3>Seguimientos</h3>
       <div class="timeline" *ngIf="seguimientos.length; else noSeguimientos">

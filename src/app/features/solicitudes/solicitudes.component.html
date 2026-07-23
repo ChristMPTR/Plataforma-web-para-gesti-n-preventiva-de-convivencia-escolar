@@ -1,0 +1,97 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Solicitudes de Apoyo</h1>
+      <p class="subtitle">{{ solicitudes.length }} solicitudes registradas</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <span class="material-symbols-outlined">add</span> Nueva Solicitud
+    </button>
+  </header>
+
+  <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
+  <div class="alert alert-error" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="loading-shimmer" *ngIf="loading">
+    <div class="shimmer-row" *ngFor="let _ of [1,2,3]"><div class="shimmer-line"></div></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div class="table-card" *ngIf="solicitudes.length; else emptyState">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr><th>Estudiante</th><th>Descripción</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of solicitudes">
+              <td><strong>{{ s.estudiante_nombre }}</strong></td>
+              <td>{{ s.descripcion | slice:0:60 }}{{ s.descripcion.length > 60 ? '...' : '' }}</td>
+              <td><span class="badge" [class]="getEstadoClass(s.estado)">{{ s.estado }}</span></td>
+              <td>{{ s.fecha_solicitud | date:'dd/MM/yyyy' }}</td>
+              <td class="acciones">
+                <button class="btn-icon" title="Editar" (click)="openEdit(s)"><span class="material-symbols-outlined">edit</span></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <span class="material-symbols-outlined">help_outline</span>
+        <h3>No hay solicitudes</h3>
+        <p>Crea la primera solicitud de apoyo para comenzar.</p>
+        <button class="btn btn-primary" (click)="openCreate()">Crear Solicitud</button>
+      </div>
+    </ng-template>
+  </ng-container>
+
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEdit ? 'Editar' : 'Nueva' }} Solicitud</h2>
+        <button class="btn-icon" (click)="closeModal()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+
+      <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
+      <div class="alert alert-error" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label>Estudiante *</label>
+          <select formControlName="id_estudiante" class="form-control">
+            <option value="">Seleccionar...</option>
+            <option *ngFor="let e of estudiantes" [value]="e.id">{{ e.nombre }}</option>
+          </select>
+          <div class="field-error" *ngIf="form.get('id_estudiante')?.invalid && form.get('id_estudiante')?.touched">Requerido</div>
+        </div>
+        <div class="form-group">
+          <label>Descripción *</label>
+          <textarea formControlName="descripcion" class="form-control" rows="3" placeholder="Detalle la solicitud de apoyo..."></textarea>
+          <div class="field-error" *ngIf="form.get('descripcion')?.invalid && form.get('descripcion')?.touched">Requerido</div>
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select formControlName="estado" class="form-control">
+            <option value="pendiente">Pendiente</option>
+            <option value="en_revision">En Revisión</option>
+            <option value="resuelto">Resuelto</option>
+            <option value="rechazado">Rechazado</option>
+          </select>
+        </div>
+        <div class="form-group" *ngIf="isEdit">
+          <label>Respuesta</label>
+          <textarea formControlName="respuesta" class="form-control" rows="2" placeholder="Respuesta al estudiante..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving">
+            {{ saving ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

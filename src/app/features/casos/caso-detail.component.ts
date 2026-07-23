@@ -18,6 +18,7 @@ export class CasoDetailComponent implements OnInit {
 
   caso: any = null;
   involucrados: any[] = [];
+  evidencias: any[] = [];
   seguimientos: any[] = [];
   reuniones: any[] = [];
   loading = true;
@@ -26,9 +27,27 @@ export class CasoDetailComponent implements OnInit {
   seguimientoForm = { accion_realizada: '', observacion: '' };
   savingSeguimiento = false;
 
+  // Involucrados
+  involucradoForm = { tipo: 'involucrado', id_estudiante: '', nombre_externo: '' };
+  estudiantesList: any[] = [];
+  isInvolucradoExterno = false;
+
+  // Evidencias
+  evidenciaFile: File | null = null;
+  evidenciaDescripcion = '';
+  uploadingEvidencia = false;
+
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.loadCaso(id);
+    this.loadEstudiantes();
+  }
+
+  private loadEstudiantes(): void {
+    this.supabase.getEstudiantesList().subscribe({
+      next: (data) => { this.estudiantesList = data ?? []; },
+      error: () => { this.estudiantesList = []; },
+    });
   }
 
   private loadCaso(id: number): void {
@@ -47,6 +66,14 @@ export class CasoDetailComponent implements OnInit {
 
     this.supabase.getReunionesByCaso(id).subscribe((data: any) => {
       this.reuniones = data ?? [];
+    });
+
+    this.supabase.getInvolucradosByCasoRx(id).subscribe((data: any) => {
+      this.involucrados = data ?? [];
+    });
+
+    this.supabase.getEvidenciasByCaso(id).subscribe((data: any) => {
+      this.evidencias = data ?? [];
     });
   }
 
@@ -72,6 +99,76 @@ export class CasoDetailComponent implements OnInit {
         this.seguimientoForm = { accion_realizada: '', observacion: '' };
       }
       this.savingSeguimiento = false;
+    });
+  }
+
+  // Involucrados
+  toggleInvolucradoExterno(): void {
+    this.isInvolucradoExterno = !this.isInvolucradoExterno;
+    this.involucradoForm.id_estudiante = '';
+    this.involucradoForm.nombre_externo = '';
+  }
+
+  agregarInvolucrado(): void {
+    if (!this.caso?.id) return;
+    if (this.isInvolucradoExterno && !this.involucradoForm.nombre_externo) return;
+    if (!this.isInvolucradoExterno && !this.involucradoForm.id_estudiante) return;
+
+    const inv: any = {
+      id_caso: this.caso.id,
+      tipo: this.involucradoForm.tipo,
+    };
+    if (this.isInvolucradoExterno) {
+      inv.nombre_externo = this.involucradoForm.nombre_externo;
+    } else {
+      inv.id_estudiante = Number(this.involucradoForm.id_estudiante);
+    }
+
+    this.supabase.addInvolucradoRx(inv).subscribe((data: any) => {
+      if (data) {
+        this.involucrados.push(data);
+        this.involucradoForm = { tipo: 'involucrado', id_estudiante: '', nombre_externo: '' };
+      }
+    });
+  }
+
+  eliminarInvolucrado(inv: any): void {
+    if (!confirm('¿Eliminar este involucrado?')) return;
+    this.supabase.deleteInvolucradoRx(inv.id).subscribe(() => {
+      this.involucrados = this.involucrados.filter(i => i.id !== inv.id);
+    });
+  }
+
+  // Evidencias
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.evidenciaFile = input.files?.[0] ?? null;
+  }
+
+  subirEvidencia(): void {
+    if (!this.caso?.id || !this.evidenciaFile) return;
+    this.uploadingEvidencia = true;
+    const evidencia = {
+      id_caso: this.caso.id,
+      descripcion: this.evidenciaDescripcion,
+    };
+    this.supabase.uploadEvidencia(evidencia, this.evidenciaFile).subscribe({
+      next: (data: any) => {
+        if (data) this.evidencias.unshift(data);
+        this.evidenciaFile = null;
+        this.evidenciaDescripcion = '';
+        this.uploadingEvidencia = false;
+      },
+      error: () => {
+        this.uploadingEvidencia = false;
+      },
+    });
+  }
+
+  eliminarEvidencia(ev: any): void {
+    if (!confirm('¿Eliminar esta evidencia?')) return;
+    this.supabase.deleteEvidencia(ev.id).subscribe(() => {
+      this.evidencias = this.evidencias.filter(e => e.id !== ev.id);
     });
   }
 

@@ -59,6 +59,21 @@ export const routes: Routes = [
         title: 'Reuniones — Nexora',
       },
       {
+        path: 'establecimientos',
+        loadComponent: () => import('./features/establecimientos/establecimientos.component').then(m => m.EstablecimientosComponent),
+        title: 'Establecimientos — Nexora',
+      },
+      {
+        path: 'solicitudes',
+        loadComponent: () => import('./features/solicitudes/solicitudes.component').then(m => m.SolicitudesComponent),
+        title: 'Solicitudes — Nexora',
+      },
+      {
+        path: 'recursos',
+        loadComponent: () => import('./features/recursos/recursos.component').then(m => m.RecursosComponent),
+        title: 'Recursos — Nexora',
+      },
+      {
         path: 'reportes',
         loadComponent: () => import('./features/reportes/reportes.component').then(m => m.ReportesComponent),
         title: 'Reportes — Nexora',

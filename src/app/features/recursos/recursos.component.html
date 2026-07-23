@@ -1,0 +1,87 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Recursos de Apoyo</h1>
+      <p class="subtitle">{{ recursos.length }} recursos disponibles</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreate()">
+      <span class="material-symbols-outlined">add</span> Nuevo Recurso
+    </button>
+  </header>
+
+  <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
+  <div class="alert alert-error" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+  <div class="loading-shimmer" *ngIf="loading">
+    <div class="shimmer-row" *ngFor="let _ of [1,2,3]"><div class="shimmer-line"></div></div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div class="recursos-grid" *ngIf="recursos.length; else emptyState">
+      <div class="recurso-card" *ngFor="let r of recursos">
+        <div class="recurso-header">
+          <span class="material-symbols-outlined recurso-icon">{{ getTipoIcon(r.tipo) }}</span>
+          <span class="recurso-tipo">{{ r.tipo }}</span>
+          <div class="recurso-actions">
+            <button class="btn-icon" title="Editar" (click)="openEdit(r)"><span class="material-symbols-outlined">edit</span></button>
+            <button class="btn-icon btn-danger" title="Eliminar" (click)="eliminar(r)"><span class="material-symbols-outlined">delete</span></button>
+          </div>
+        </div>
+        <h3>{{ r.titulo }}</h3>
+        <p *ngIf="r.descripcion">{{ r.descripcion }}</p>
+        <a *ngIf="r.url" [href]="r.url" target="_blank" class="recurso-link">
+          <span class="material-symbols-outlined">open_in_new</span> Ver recurso
+        </a>
+      </div>
+    </div>
+
+    <ng-template #emptyState>
+      <div class="empty-state">
+        <span class="material-symbols-outlined">library_books</span>
+        <h3>No hay recursos</h3>
+        <p>Agrega recursos de apoyo para el equipo de convivencia.</p>
+        <button class="btn btn-primary" (click)="openCreate()">Crear Recurso</button>
+      </div>
+    </ng-template>
+  </ng-container>
+
+  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEdit ? 'Editar' : 'Nuevo' }} Recurso</h2>
+        <button class="btn-icon" (click)="closeModal()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+
+      <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
+      <div class="alert alert-error" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+          <label>Título *</label>
+          <input type="text" formControlName="titulo" class="form-control" placeholder="Nombre del recurso" />
+          <div class="field-error" *ngIf="form.get('titulo')?.invalid && form.get('titulo')?.touched">Requerido</div>
+        </div>
+        <div class="form-group">
+          <label>Tipo *</label>
+          <select formControlName="tipo" class="form-control">
+            <option *ngFor="let t of tipos" [value]="t">{{ t | titlecase }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea formControlName="descripcion" class="form-control" rows="3" placeholder="Descripción del recurso..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>URL</label>
+          <input type="url" formControlName="url" class="form-control" placeholder="https://..." />
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving">
+            {{ saving ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -125,6 +125,69 @@
   p { color: #95a5a6; margin: 6px 0 0; font-size: 0.9rem; }
 }
 
+.empty-text { color: #95a5a6; font-size: 0.85rem; font-style: italic; margin: 0 0 12px; }
+
+// Involucrados form
+.inv-form {
+  margin-top: 16px; padding-top: 12px; border-top: 1px solid #ecf0f1;
+}
+
+.inv-form-row {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 8px;
+}
+
+.form-control-sm {
+  padding: 6px 10px; border: 1px solid #dce1e7; border-radius: 6px; font-size: 0.85rem;
+  background: $bg; color: $text; flex: 1;
+  &:focus { outline: none; border-color: $primary-light; }
+}
+
+.btn-icon-sm {
+  background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; color: #95a5a6;
+  display: inline-flex; align-items: center;
+  &:hover { background: #ecf0f1; color: $primary; }
+  &.btn-danger:hover { background: #fadbd8; color: $danger; }
+  span { font-size: 18px; }
+}
+
+.toggle-btn { flex: 0 0 auto; }
+
+// Evidencias
+.evidencia-upload {
+  margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #ecf0f1;
+}
+
+.upload-row {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+}
+
+.file-input {
+  font-size: 0.85rem; color: #7f8c8d;
+  &::file-selector-button {
+    padding: 6px 12px; border: 1px solid #dce1e7; border-radius: 6px; background: white;
+    font-size: 0.85rem; cursor: pointer; margin-right: 8px;
+    &:hover { background: #f8f9fa; }
+  }
+}
+
+.evidencia-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid #f0f0f0;
+  &:last-child { border-bottom: none; }
+}
+
+.evidencia-info {
+  display: flex; align-items: center; gap: 12px; flex: 1;
+  strong { font-size: 0.9rem; color: $text; }
+  p { margin: 2px 0 0; font-size: 0.8rem; color: #7f8c8d; }
+}
+
+.evidencia-icon { font-size: 28px; color: $primary; }
+
+.evidencia-date { font-size: 0.75rem; color: #95a5a6; }
+
+.evidencia-actions { display: flex; gap: 4px; }
+
 // Loading
 .loading-shimmer { margin-bottom: 20px; }
 

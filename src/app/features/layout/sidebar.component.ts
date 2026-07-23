@@ -28,6 +28,9 @@ export class SidebarComponent {
     { label: 'Cursos', route: '/cursos', icon: '\u{1F4DA}' },
     { label: 'Seguimientos', route: '/seguimientos', icon: '\u{1F4DD}' },
     { label: 'Reuniones', route: '/reuniones', icon: '\u{1F91D}' },
+    { label: 'Establecimientos', route: '/establecimientos', icon: '\u{1F3E2}' },
+    { label: 'Solicitudes', route: '/solicitudes', icon: '\u{1F4AC}' },
+    { label: 'Recursos', route: '/recursos', icon: '\u{1F4DA}' },
     { label: 'Reportes', route: '/reportes', icon: '\u{1F4C8}' },
     { label: 'Configuración', route: '/configuracion', icon: '\u2699\uFE0F' },
   ];

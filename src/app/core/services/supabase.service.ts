@@ -874,6 +874,134 @@ export class SupabaseService {
     }
   }
 
+  // ─── Evidencias Digitales ───
+
+  getEvidenciasByCaso(casoId: number): Observable<any[]> {
+    return from(
+      this.supabase.from('evidencias')
+        .select('*')
+        .eq('id_caso', casoId)
+        .order('fecha_subida', { ascending: false })
+        .then(r => r.data ?? [])
+    );
+  }
+
+  uploadEvidencia(evidencia: any, file: File): Observable<any> {
+    return from(
+      (async () => {
+        const path = `evidencias/${evidencia.id_caso}/${Date.now()}_${file.name}`;
+        const { error: uploadError } = await this.supabase.storage
+          .from('evidencias')
+          .upload(path, file);
+        if (uploadError) throw new Error(uploadError.message);
+        const { data: urlData } = this.supabase.storage.from('evidencias').getPublicUrl(path);
+        const { data, error } = await this.supabase.from('evidencias')
+          .insert({ ...evidencia, url_archivo: urlData.publicUrl, nombre_archivo: file.name, tipo_archivo: file.type })
+          .select().single();
+        if (error) throw new Error(error.message);
+        return data;
+      })()
+    );
+  }
+
+  deleteEvidencia(id: number): Observable<void> {
+    return from(
+      this.supabase.from('evidencias').delete().eq('id', id).then(() => undefined)
+    );
+  }
+
+  // ─── Involucrados (RxJS) ───
+
+  getInvolucradosByCasoRx(casoId: number): Observable<any[]> {
+    return from(
+      this.supabase.from('involucrados')
+        .select('*, estudiantes(nombre, rut)')
+        .eq('id_caso', casoId)
+        .then(r => (r.data ?? []).map((i: any) => ({
+          ...i,
+          estudiante_nombre: i.estudiantes?.nombre ?? i.nombre_externo ?? '—',
+        })))
+    );
+  }
+
+  addInvolucradoRx(inv: any): Observable<any> {
+    return from(this.supabase.from('involucrados').insert(inv).select().single().then(r => r.data));
+  }
+
+  deleteInvolucradoRx(id: number): Observable<void> {
+    return from(this.supabase.from('involucrados').delete().eq('id', id).then(() => undefined));
+  }
+
+  // ─── Colegios / Establecimientos (RxJS) ───
+
+  getColegios(): Observable<any[]> {
+    return from(
+      this.supabase.from('colegios').select('*').order('nombre').then(r => r.data ?? [])
+    );
+  }
+
+  createColegioRx(colegio: any): Observable<any> {
+    return from(this.supabase.from('colegios').insert(colegio).select().single().then(r => r.data));
+  }
+
+  updateColegioRx(id: number, colegio: any): Observable<any> {
+    return from(this.supabase.from('colegios').update(colegio).eq('id', id).select().single().then(r => r.data));
+  }
+
+  deleteColegioRx(id: number): Observable<void> {
+    return from(this.supabase.from('colegios').delete().eq('id', id).then(() => undefined));
+  }
+
+  // ─── Solicitudes de Apoyo (RxJS) ───
+
+  getSolicitudes(): Observable<any[]> {
+    return from(
+      this.supabase.from('solicitudes_apoyo')
+        .select('*, estudiantes(nombre)')
+        .order('fecha_solicitud', { ascending: false })
+        .then(r => (r.data ?? []).map((s: any) => ({
+          ...s,
+          estudiante_nombre: s.estudiantes?.nombre ?? '—',
+        })))
+    );
+  }
+
+  createSolicitudRx(sol: any): Observable<any> {
+    return from(this.supabase.from('solicitudes_apoyo').insert(sol).select().single().then(r => r.data));
+  }
+
+  updateSolicitudRx(id: number, sol: any): Observable<any> {
+    return from(this.supabase.from('solicitudes_apoyo').update(sol).eq('id', id).select().single().then(r => r.data));
+  }
+
+  // ─── Recursos de Apoyo (RxJS) ───
+
+  getRecursos(): Observable<any[]> {
+    return from(
+      this.supabase.from('recursos_apoyo').select('*').order('titulo').then(r => r.data ?? [])
+    );
+  }
+
+  createRecursoRx(recurso: any): Observable<any> {
+    return from(this.supabase.from('recursos_apoyo').insert(recurso).select().single().then(r => r.data));
+  }
+
+  updateRecursoRx(id: number, recurso: any): Observable<any> {
+    return from(this.supabase.from('recursos_apoyo').update(recurso).eq('id', id).select().single().then(r => r.data));
+  }
+
+  deleteRecursoRx(id: number): Observable<void> {
+    return from(this.supabase.from('recursos_apoyo').delete().eq('id', id).then(() => undefined));
+  }
+
+  // ─── Estudiantes list (for dropdowns) ───
+
+  getEstudiantesList(): Observable<any[]> {
+    return from(
+      this.supabase.from('estudiantes').select('id, nombre').order('nombre').then(r => r.data ?? [])
+    );
+  }
+
   // Storage (legacy)
   async uploadActa(file: File, path: string) {
     try {
