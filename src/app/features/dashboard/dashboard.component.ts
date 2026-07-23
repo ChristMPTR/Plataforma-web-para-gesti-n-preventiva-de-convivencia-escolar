@@ -77,25 +77,90 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     if (!this.barChartCanvas || !this.chartJs) return;
     const ctx = this.barChartCanvas.nativeElement.getContext('2d');
     if (!ctx) return;
+
+    const chartColors = [
+      '#2e86c1', '#27ae60', '#f39c12', '#e74c3c',
+      '#8e44ad', '#16a085', '#d35400', '#2c3e50',
+      '#1abc9c', '#e67e22', '#9b59b6', '#3498db',
+    ];
+    const labels = this.casosPorCurso.map((c: any) => c.curso ?? c.nombre);
+    const data = this.casosPorCurso.map((c: any) => c.cantidad ?? c.total);
+    const colors = labels.map((_: any, i: number) => chartColors[i % chartColors.length]);
+
+    // Custom plugin: draw value on top of each bar
+    const valuePlugin = {
+      id: 'barValueLabels',
+      afterDatasetsDraw(chart: any) {
+        const { ctx: c } = chart;
+        chart.getDatasetMeta(0).data.forEach((bar: any, i: number) => {
+          const val = chart.data.datasets[0].data[i];
+          if (val === 0) return;
+          c.save();
+          c.font = '600 13px Inter, sans-serif';
+          c.fillStyle = '#2c3e50';
+          c.textAlign = 'center';
+          c.textBaseline = 'bottom';
+          c.fillText(val, bar.x, bar.y - 6);
+          c.restore();
+        });
+      },
+    };
+
     new this.chartJs.Chart(ctx, {
       type: 'bar',
       data: {
-        labels: this.casosPorCurso.map((c: any) => c.curso ?? c.nombre),
+        labels,
         datasets: [{
           label: 'Casos',
-          data: this.casosPorCurso.map((c: any) => c.cantidad ?? c.total),
-          backgroundColor: '#2e86c1',
-          borderRadius: 6,
+          data,
+          backgroundColor: colors,
+          borderRadius: 8,
+          borderSkipped: false,
+          barThickness: 36,
+          hoverBackgroundColor: colors.map((c: string) => c + 'CC'),
         }],
       },
       options: {
         responsive: true,
-        plugins: { legend: { display: false } },
+        maintainAspectRatio: false,
+        animation: { duration: 800, easing: 'easeOutQuart' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#2c3e50',
+            titleFont: { size: 13, weight: '600' },
+            bodyFont: { size: 12 },
+            padding: 12,
+            cornerRadius: 8,
+            displayColors: false,
+            callbacks: {
+              title: (items: any[]) => `Curso: ${items[0].label}`,
+              label: (item: any) => `${item.raw} caso${item.raw !== 1 ? 's' : ''}`,
+            },
+          },
+        },
         scales: {
-          y: { beginAtZero: true, grid: { color: '#e9ecef' } },
-          x: { grid: { display: false } },
+          y: {
+            beginAtZero: true,
+            grid: { color: '#f0f2f5', drawBorder: false },
+            ticks: {
+              stepSize: 1,
+              font: { size: 12, weight: '500' },
+              color: '#7f8c8d',
+            },
+            border: { display: false },
+          },
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { size: 12, weight: '600' },
+              color: '#2c3e50',
+            },
+            border: { display: false },
+          },
         },
       },
+      plugins: [valuePlugin],
     });
   }
 
@@ -103,28 +168,106 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     if (!this.lineChartCanvas || !this.chartJs) return;
     const ctx = this.lineChartCanvas.nativeElement.getContext('2d');
     if (!ctx) return;
+
+    const labels = this.tendencias.map((t: any) => {
+      const [y, m] = (t.mes ?? t.fecha ?? '').split('-');
+      const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      return m ? monthNames[parseInt(m, 10) - 1] + ' ' + y : t.mes ?? t.fecha;
+    });
+    const data = this.tendencias.map((t: any) => t.cantidad ?? t.total);
+
+    // Create gradient fill
+    const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+    gradient.addColorStop(0, 'rgba(46, 134, 193, 0.25)');
+    gradient.addColorStop(0.5, 'rgba(46, 134, 193, 0.08)');
+    gradient.addColorStop(1, 'rgba(46, 134, 193, 0.01)');
+
+    // Custom plugin: draw value above each point
+    const pointValuePlugin = {
+      id: 'lineValueLabels',
+      afterDatasetsDraw(chart: any) {
+        const { ctx: c } = chart;
+        chart.getDatasetMeta(0).data.forEach((point: any, i: number) => {
+          const val = chart.data.datasets[0].data[i];
+          if (val === 0) return;
+          c.save();
+          c.font = '600 12px Inter, sans-serif';
+          c.fillStyle = '#1a5276';
+          c.textAlign = 'center';
+          c.textBaseline = 'bottom';
+          c.fillText(val, point.x, point.y - 10);
+          c.restore();
+        });
+      },
+    };
+
     new this.chartJs.Chart(ctx, {
       type: 'line',
       data: {
-        labels: this.tendencias.map((t: any) => t.mes ?? t.fecha),
+        labels,
         datasets: [{
-          label: 'Tendencia Mensual',
-          data: this.tendencias.map((t: any) => t.cantidad ?? t.total),
-          borderColor: '#27ae60',
-          backgroundColor: 'rgba(39, 174, 96, 0.1)',
+          label: 'Casos Mensuales',
+          data,
+          borderColor: '#2e86c1',
+          backgroundColor: gradient,
           fill: true,
           tension: 0.4,
-          pointBackgroundColor: '#27ae60',
+          borderWidth: 3,
+          pointBackgroundColor: '#ffffff',
+          pointBorderColor: '#2e86c1',
+          pointBorderWidth: 2.5,
+          pointRadius: 5,
+          pointHoverRadius: 8,
+          pointHoverBackgroundColor: '#2e86c1',
+          pointHoverBorderColor: '#ffffff',
+          pointHoverBorderWidth: 3,
         }],
       },
       options: {
         responsive: true,
-        plugins: { legend: { display: false } },
+        maintainAspectRatio: false,
+        animation: { duration: 1000, easing: 'easeOutQuart' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#2c3e50',
+            titleFont: { size: 13, weight: '600' },
+            bodyFont: { size: 12 },
+            padding: 12,
+            cornerRadius: 8,
+            displayColors: false,
+            intersect: false,
+            mode: 'index',
+            callbacks: {
+              title: (items: any[]) => `Período: ${items[0].label}`,
+              label: (item: any) => `${item.raw} caso${item.raw !== 1 ? 's' : ''} registrado${item.raw !== 1 ? 's' : ''}`,
+            },
+          },
+        },
+        interaction: { intersect: false, mode: 'index' },
         scales: {
-          y: { beginAtZero: true, grid: { color: '#e9ecef' } },
-          x: { grid: { display: false } },
+          y: {
+            beginAtZero: true,
+            grid: { color: '#f0f2f5', drawBorder: false },
+            ticks: {
+              stepSize: 1,
+              font: { size: 12, weight: '500' },
+              color: '#7f8c8d',
+            },
+            border: { display: false },
+          },
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { size: 12, weight: '600' },
+              color: '#2c3e50',
+              maxRotation: 0,
+            },
+            border: { display: false },
+          },
         },
       },
+      plugins: [pointValuePlugin],
     });
   }
 
