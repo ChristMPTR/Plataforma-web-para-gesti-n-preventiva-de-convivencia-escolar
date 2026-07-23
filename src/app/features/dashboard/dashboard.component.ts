@@ -76,6 +76,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           clearTimeout(this.loadingTimeout);
           this.loadingTimeout = null;
         }
+        // Re-attempt chart renders after Angular updates the DOM
+        setTimeout(() => {
+          if (this.casosPorCurso.length) this.renderBarChart();
+          if (this.tendencias.length) this.renderLineChart();
+        }, 0);
       },
       error: (err) => {
         console.error('[Dashboard] Error loading stats:', err);
