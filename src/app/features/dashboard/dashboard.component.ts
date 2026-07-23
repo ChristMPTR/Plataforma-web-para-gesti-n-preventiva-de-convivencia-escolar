@@ -37,7 +37,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, AfterViewCheck
 
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      import('chart.js').then((m) => {
+      import('chart.js/auto').then((m) => {
         this.chartJs = m;
         this.tryRenderCharts();
       });
@@ -191,62 +191,67 @@ export class DashboardComponent implements OnInit, AfterViewInit, AfterViewCheck
       },
     };
 
-    this.barChart = new this.chartJs.Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Casos',
-          data,
-          backgroundColor: colors,
-          borderRadius: 8,
-          borderSkipped: false,
-          barThickness: 36,
-          hoverBackgroundColor: colors.map((c: string) => c + 'CC'),
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 800, easing: 'easeOutQuart' },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#2c3e50',
-            titleFont: { size: 13, weight: '600' },
-            bodyFont: { size: 12 },
-            padding: 12,
-            cornerRadius: 8,
-            displayColors: false,
-            callbacks: {
-              title: (items: any[]) => `Curso: ${items[0].label}`,
-              label: (item: any) => `${item.raw} caso${item.raw !== 1 ? 's' : ''}`,
+    try {
+      this.barChart = new this.chartJs.Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Casos',
+            data,
+            backgroundColor: colors,
+            borderRadius: 8,
+            borderSkipped: false,
+            barThickness: 36,
+            hoverBackgroundColor: colors.map((c: string) => c + 'CC'),
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 800, easing: 'easeOutQuart' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#2c3e50',
+              titleFont: { size: 13, weight: '600' },
+              bodyFont: { size: 12 },
+              padding: 12,
+              cornerRadius: 8,
+              displayColors: false,
+              callbacks: {
+                title: (items: any[]) => `Curso: ${items[0].label}`,
+                label: (item: any) => `${item.raw} caso${item.raw !== 1 ? 's' : ''}`,
+              },
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: '#f0f2f5', drawBorder: false },
+              ticks: {
+                stepSize: 1,
+                font: { size: 12, weight: '500' },
+                color: '#7f8c8d',
+              },
+              border: { display: false },
+            },
+            x: {
+              grid: { display: false },
+              ticks: {
+                font: { size: 12, weight: '600' },
+                color: '#2c3e50',
+              },
+              border: { display: false },
             },
           },
         },
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: { color: '#f0f2f5', drawBorder: false },
-            ticks: {
-              stepSize: 1,
-              font: { size: 12, weight: '500' },
-              color: '#7f8c8d',
-            },
-            border: { display: false },
-          },
-          x: {
-            grid: { display: false },
-            ticks: {
-              font: { size: 12, weight: '600' },
-              color: '#2c3e50',
-            },
-            border: { display: false },
-          },
-        },
-      },
-      plugins: [valuePlugin],
-    });
+        plugins: [valuePlugin],
+      });
+    } catch (e) {
+      console.error('[Dashboard] Error rendering bar chart:', e);
+      this.barChart = null;
+    }
   }
 
   private renderLineChart(): void {
@@ -292,74 +297,79 @@ export class DashboardComponent implements OnInit, AfterViewInit, AfterViewCheck
       },
     };
 
-    this.lineChart = new this.chartJs.Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Casos Mensuales',
-          data,
-          borderColor: '#2e86c1',
-          backgroundColor: gradient,
-          fill: true,
-          tension: 0.4,
-          borderWidth: 3,
-          pointBackgroundColor: '#ffffff',
-          pointBorderColor: '#2e86c1',
-          pointBorderWidth: 2.5,
-          pointRadius: 5,
-          pointHoverRadius: 8,
-          pointHoverBackgroundColor: '#2e86c1',
-          pointHoverBorderColor: '#ffffff',
-          pointHoverBorderWidth: 3,
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 1000, easing: 'easeOutQuart' },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#2c3e50',
-            titleFont: { size: 13, weight: '600' },
-            bodyFont: { size: 12 },
-            padding: 12,
-            cornerRadius: 8,
-            displayColors: false,
-            intersect: false,
-            mode: 'index',
-            callbacks: {
-              title: (items: any[]) => `Período: ${items[0].label}`,
-              label: (item: any) => `${item.raw} caso${item.raw !== 1 ? 's' : ''} registrado${item.raw !== 1 ? 's' : ''}`,
+    try {
+      this.lineChart = new this.chartJs.Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Casos Mensuales',
+            data,
+            borderColor: '#2e86c1',
+            backgroundColor: gradient,
+            fill: true,
+            tension: 0.4,
+            borderWidth: 3,
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: '#2e86c1',
+            pointBorderWidth: 2.5,
+            pointRadius: 5,
+            pointHoverRadius: 8,
+            pointHoverBackgroundColor: '#2e86c1',
+            pointHoverBorderColor: '#ffffff',
+            pointHoverBorderWidth: 3,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 1000, easing: 'easeOutQuart' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#2c3e50',
+              titleFont: { size: 13, weight: '600' },
+              bodyFont: { size: 12 },
+              padding: 12,
+              cornerRadius: 8,
+              displayColors: false,
+              intersect: false,
+              mode: 'index',
+              callbacks: {
+                title: (items: any[]) => `Período: ${items[0].label}`,
+                label: (item: any) => `${item.raw} caso${item.raw !== 1 ? 's' : ''} registrado${item.raw !== 1 ? 's' : ''}`,
+              },
+            },
+          },
+          interaction: { intersect: false, mode: 'index' },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: '#f0f2f5', drawBorder: false },
+              ticks: {
+                stepSize: 1,
+                font: { size: 12, weight: '500' },
+                color: '#7f8c8d',
+              },
+              border: { display: false },
+            },
+            x: {
+              grid: { display: false },
+              ticks: {
+                font: { size: 12, weight: '600' },
+                color: '#2c3e50',
+                maxRotation: 0,
+              },
+              border: { display: false },
             },
           },
         },
-        interaction: { intersect: false, mode: 'index' },
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: { color: '#f0f2f5', drawBorder: false },
-            ticks: {
-              stepSize: 1,
-              font: { size: 12, weight: '500' },
-              color: '#7f8c8d',
-            },
-            border: { display: false },
-          },
-          x: {
-            grid: { display: false },
-            ticks: {
-              font: { size: 12, weight: '600' },
-              color: '#2c3e50',
-              maxRotation: 0,
-            },
-            border: { display: false },
-          },
-        },
-      },
-      plugins: [pointValuePlugin],
-    });
+        plugins: [pointValuePlugin],
+      });
+    } catch (e) {
+      console.error('[Dashboard] Error rendering line chart:', e);
+      this.lineChart = null;
+    }
   }
 
   getPrioridadClass(p: string): string {
