@@ -6,7 +6,12 @@ import { routes } from './app.routes';
 import { AuthService } from './core/services/auth.service';
 
 function initializeAuth(authService: AuthService): () => Promise<void> {
-  return () => authService.waitForSession();
+  return () => {
+    // Race: session ready vs 6-second global timeout — app ALWAYS boots
+    const sessionPromise = authService.waitForSession();
+    const timeoutPromise = new Promise<void>(resolve => setTimeout(resolve, 6000));
+    return Promise.race([sessionPromise, timeoutPromise]);
+  };
 }
 
 export const appConfig: ApplicationConfig = {

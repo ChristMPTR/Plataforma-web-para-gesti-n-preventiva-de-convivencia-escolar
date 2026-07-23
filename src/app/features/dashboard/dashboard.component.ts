@@ -34,6 +34,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     if (isPlatformBrowser(this.platformId)) {
       import('chart.js').then((m) => {
         this.chartJs = m;
+        // Chart.js loaded AFTER data may have arrived — retry renders
+        if (this.casosPorCurso.length) this.renderBarChart();
+        if (this.tendencias.length) this.renderLineChart();
       });
     }
   }

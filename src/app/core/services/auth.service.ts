@@ -27,9 +27,14 @@ export class AuthService {
     this.sessionReady = this.restoreSession();
   }
 
-  /** Called by APP_INITIALIZER to block routing until session is resolved */
+  /** Called by APP_INITIALIZER — resolves when session is ready OR after timeout */
   waitForSession(): Promise<void> {
     return this.sessionReady;
+  }
+
+  /** Promise that resolves after ms milliseconds — used as fallback timeout */
+  private timeout(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   private mapRol(usuario: any): Usuario {
@@ -40,34 +45,52 @@ export class AuthService {
   }
 
   private async restoreSession(): Promise<void> {
-    const { session, error } = await this.supabase.getSession();
-    if (error || !session?.user) {
+    try {
+      const { session, error } = await Promise.race([
+        this.supabase.getSession(),
+        new Promise<{ session: null; error: string }>((resolve) =>
+          setTimeout(() => resolve({ session: null, error: 'timeout' }), 5000)
+        ),
+      ]);
+
+      if (error || !session?.user) {
+        this.currentUserSubject.next(null);
+        this.currentUserSignal.set(null);
+        this.isAuthenticatedSignal.set(false);
+        return;
+      }
+
+      const { data: usuario } = await Promise.race([
+        this.supabase.getUsuarioByAuthId(session.user.id),
+        new Promise<{ data: null; error: string }>((resolve) =>
+          setTimeout(() => resolve({ data: null, error: 'timeout' }), 5000)
+        ),
+      ]);
+
+      if (usuario) {
+        const mapped = this.mapRol(usuario);
+        this.currentUserSubject.next(mapped);
+        this.currentUserSignal.set(mapped);
+        this.isAuthenticatedSignal.set(true);
+      } else {
+        // Fallback: crear usuario temporal si existe sesión pero no hay registro en BD
+        const email = session.user.email || '';
+        const isAdmin = email.toLowerCase().includes('admin');
+        const fallbackUser: Usuario = {
+          id: 1,
+          nombre: isAdmin ? 'Administrador Nexora' : 'Encargado de Convivencia',
+          correo: email,
+          id_colegio: 1, estado: 'activo', created_at: new Date().toISOString(),
+          rol: isAdmin ? 'admin' : 'encargado_convivencia',
+        };
+        this.currentUserSubject.next(fallbackUser);
+        this.currentUserSignal.set(fallbackUser);
+        this.isAuthenticatedSignal.set(true);
+      }
+    } catch {
       this.currentUserSubject.next(null);
       this.currentUserSignal.set(null);
       this.isAuthenticatedSignal.set(false);
-      return;
-    }
-
-    const { data: usuario } = await this.supabase.getUsuarioByAuthId(session.user.id);
-    if (usuario) {
-      const mapped = this.mapRol(usuario);
-      this.currentUserSubject.next(mapped);
-      this.currentUserSignal.set(mapped);
-      this.isAuthenticatedSignal.set(true);
-    } else {
-      // Fallback: crear usuario temporal si existe sesión pero no hay registro en BD
-      const email = session.user.email || '';
-      const isAdmin = email.toLowerCase().includes('admin');
-      const fallbackUser: Usuario = {
-        id: 1,
-        nombre: isAdmin ? 'Administrador Nexora' : 'Encargado de Convivencia',
-        correo: email,
-        id_colegio: 1, estado: 'activo', created_at: new Date().toISOString(),
-        rol: isAdmin ? 'admin' : 'encargado_convivencia',
-      };
-      this.currentUserSubject.next(fallbackUser);
-      this.currentUserSignal.set(fallbackUser);
-      this.isAuthenticatedSignal.set(true);
     }
   }
 
