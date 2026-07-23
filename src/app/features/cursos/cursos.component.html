@@ -59,7 +59,7 @@
               <td><strong>{{ c.nivel }}</strong></td>
               <td>{{ c.letra }}</td>
               <td>{{ c.anio }}</td>
-              <td>{{ c.estudiantes?.length ?? 0 }}</td>
+              <td>{{ c.total_estudiantes ?? 0 }}</td>
               <td><span class="badge" [class]="getEstadoClass(c.estado ?? 'activo')">{{ c.estado ?? 'activo' }}</span></td>
               <td class="acciones" (click)="$event.stopPropagation()">
                 <button class="btn-icon" title="Editar" (click)="openEdit(c, $event)"><span class="material-symbols-outlined">edit</span></button>

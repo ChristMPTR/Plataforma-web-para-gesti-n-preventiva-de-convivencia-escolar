@@ -39,6 +39,7 @@ export class EstudiantesComponent implements OnInit {
       nombre: ['', Validators.required],
       rut: [''],
       estado: ['activo', Validators.required],
+      id_curso: [null],
     });
   }
 
@@ -73,7 +74,7 @@ export class EstudiantesComponent implements OnInit {
   openCreate(): void {
     this.isEdit = false;
     this.selectedEst = undefined;
-    this.form.reset({ estado: 'activo' });
+    this.form.reset({ estado: 'activo', id_curso: null });
     this.showModal = true;
     this.successMsg = '';
     this.errorMsg = '';
@@ -83,10 +84,13 @@ export class EstudiantesComponent implements OnInit {
     event.stopPropagation();
     this.isEdit = true;
     this.selectedEst = est;
+    // Extract current course from matriculas
+    const matriculaActiva = est.matriculas?.find((m: any) => m.estado === 'activo') ?? est.matriculas?.[0];
     this.form.patchValue({
       nombre: est.nombre,
       rut: est.rut,
       estado: est.estado,
+      id_curso: matriculaActiva?.id_curso ?? null,
     });
     this.showModal = true;
     this.successMsg = '';
@@ -106,26 +110,56 @@ export class EstudiantesComponent implements OnInit {
     this.saving = true;
     this.successMsg = '';
     this.errorMsg = '';
-    const data = this.form.value;
-
-    const payload = { ...data, id_colegio: 1 };  // Liceo Ejemplo Santiago
+    const { id_curso, ...estData } = this.form.value;
+    const payload = { ...estData, id_colegio: 1 };  // Liceo Ejemplo Santiago
 
     const request = this.isEdit && this.selectedEst?.id
       ? this.supabase.updateEstudianteRx(this.selectedEst.id, payload)
       : this.supabase.createEstudianteRx(payload);
 
     request.subscribe({
-      next: () => {
-        this.saving = false;
-        this.successMsg = `Estudiante ${this.isEdit ? 'actualizado' : 'creado'} exitosamente`;
-        this.loadEstudiantes();
-        setTimeout(() => this.closeModal(), 1200);
+      next: (result: any) => {
+        const estId = result?.id ?? this.selectedEst?.id;
+        // If a course was selected, create or update the matricula
+        if (id_curso && estId) {
+          this.saveMatricula(estId, id_curso);
+        } else {
+          this.saving = false;
+          this.successMsg = `Estudiante ${this.isEdit ? 'actualizado' : 'creado'} exitosamente`;
+          this.loadEstudiantes();
+          setTimeout(() => this.closeModal(), 1200);
+        }
       },
       error: (err: any) => {
         this.saving = false;
         this.errorMsg = err.message || 'Error al guardar';
       },
     });
+  }
+
+  private saveMatricula(estId: number, cursoId: number): void {
+    const matriculaPayload = {
+      id_estudiante: estId,
+      id_curso: cursoId,
+      anio_escolar: new Date().getFullYear(),
+      estado: 'activo',
+    };
+
+    // createMatricula returns a Promise, not Observable
+    this.supabase.createMatricula(matriculaPayload as any)
+      .then(() => {
+        this.saving = false;
+        this.successMsg = `Estudiante ${this.isEdit ? 'actualizado' : 'creado'} con curso asignado`;
+        this.loadEstudiantes();
+        setTimeout(() => this.closeModal(), 1200);
+      })
+      .catch((err: any) => {
+        // Student was created but matricula failed — still show partial success
+        this.saving = false;
+        this.successMsg = `Estudiante ${this.isEdit ? 'actualizado' : 'creado'} (error al asignar curso: ${err.message ?? err})`;
+        this.loadEstudiantes();
+        setTimeout(() => this.closeModal(), 1500);
+      });
   }
 
   getEstadoClass(e: any): string {

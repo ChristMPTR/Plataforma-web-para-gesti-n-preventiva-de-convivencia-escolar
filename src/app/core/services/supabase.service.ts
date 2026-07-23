@@ -251,8 +251,24 @@ export class SupabaseService {
         const limit = filters?.limit ?? 10;
         const fromP = (page - 1) * limit;
         const toP = fromP + limit - 1;
-        const { data, count } = await query.range(fromP, toP).order('nivel');
-        return { data: data ?? [], count: count ?? 0 };
+        const { data: cursosData, count } = await query.range(fromP, toP).order('nivel');
+
+        // Count students per course via matriculas
+        const { data: matriculas } = await this.supabase.from('matriculas')
+          .select('id_curso, id_estudiante')
+          .eq('estado', 'activo');
+
+        const countByCurso: Record<number, number> = {};
+        for (const m of (matriculas ?? [])) {
+          countByCurso[m.id_curso] = (countByCurso[m.id_curso] || 0) + 1;
+        }
+
+        const data = (cursosData ?? []).map((c: any) => ({
+          ...c,
+          total_estudiantes: countByCurso[c.id] ?? 0,
+        }));
+
+        return { data, count: count ?? 0 };
       })()
     );
   }
