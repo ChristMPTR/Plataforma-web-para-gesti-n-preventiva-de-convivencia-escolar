@@ -171,18 +171,40 @@ export class SupabaseService {
     }
     return from(
       (async () => {
-        let query = this.supabase.from('estudiantes').select('*', { count: 'exact' });
+        let query = this.supabase.from('estudiantes').select('*, matriculas(id, id_curso, anio_escolar, estado, cursos(id, nivel, letra, anio))', { count: 'exact' });
         if (search) query = query.or(`nombre.ilike.%${search}%,rut.ilike.%${search}%`);
         const fromP = (page - 1) * limit;
         const toP = fromP + limit - 1;
         const { data, count } = await query.range(fromP, toP).order('nombre');
-        return { data: data ?? [], count: count ?? 0 };
+        // Flatten: derive curso_actual from matriculas for template compatibility
+        const transformed = (data ?? []).map((e: any) => {
+          const matriculaActiva = (e.matriculas ?? []).find((m: any) => m.estado === 'activo') ?? e.matriculas?.[0];
+          const curso = matriculaActiva?.cursos;
+          return {
+            ...e,
+            curso_actual: curso ? `${curso.nivel} ${curso.letra}` : 'Sin curso',
+            matricula_id: matriculaActiva?.id ?? null,
+          };
+        });
+        return { data: transformed, count: count ?? 0 };
       })()
     );
   }
 
   getEstudiante(id: number): Observable<any> {
-    return from(this.supabase.from('estudiantes').select('*').eq('id', id).single().then(r => r.data));
+    return from(
+      (async () => {
+        const { data } = await this.supabase.from('estudiantes').select('*, matriculas(id, id_curso, anio_escolar, estado, cursos(id, nivel, letra, anio))').eq('id', id).single();
+        if (!data) return null;
+        const matriculaActiva = (data.matriculas ?? []).find((m: any) => m.estado === 'activo') ?? data.matriculas?.[0];
+        const curso = matriculaActiva?.cursos;
+        return {
+          ...data,
+          curso_actual: curso ? `${curso.nivel} ${curso.letra}` : 'Sin curso',
+          matricula_id: matriculaActiva?.id ?? null,
+        };
+      })()
+    );
   }
 
   createEstudianteRx(est: any): Observable<any> {
